@@ -34,8 +34,8 @@ export default function Home({ onGameStarted }) {
   return (
     <div className="page">
       <div className="card">
-        <h1 className="title">Game Title</h1>
-        <p className="desc">Game Description</p>
+        <h1 className="title">Stock Price Game</h1>
+        <p className="desc">Guess the stock price!</p>
 
         <div className="selectRow">
           <label htmlFor="ticker" className="label">
