@@ -6,6 +6,7 @@ const TICKERS = [
   "BAC","NFLX","INTC","CSCO","ADBE","CRM","ORCL","NKE","T","WMT"
 ];
 
+// This function begins is used to start the game (shows home screen)
 export default function Home({ onGameStarted }) {
   const [ticker, setTicker] = useState("");
   const [loading, setLoading] = useState(false);
@@ -23,7 +24,11 @@ export default function Home({ onGameStarted }) {
       });
       if (!res.ok) throw new Error("Failed to start game.");
       const data = await res.json();
-      onGameStarted?.(data); // parent can route to game view later
+      onGameStarted?.({
+        ...data,
+        currentDate: data.hiddenDate 
+      });
+
     } catch (e) {
       setError(e.message || "Something went wrong.");
     } finally {
