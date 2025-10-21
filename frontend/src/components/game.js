@@ -2,6 +2,7 @@
 import React, { useState } from "react";
 import BuySellScreen from "./buySellScreen";
 import axios from "axios";
+import './game.css';
 
 // Function to control game (shows screen with options to buy, sell, hold, or quit)
 export default function Game({ gameState, onExit }) {
@@ -103,21 +104,43 @@ export default function Game({ gameState, onExit }) {
     }
 
     return (
-    <div className="page">
-        <div className="card">
-        <h2 className="title">Day {state.day}</h2>
-        <p>Ticker: <strong>{state.ticker}</strong></p>
-        <p>Price: ${state.price.toFixed(2)}</p>
-        <p>Bank: ${state.bank.toFixed(2)}</p>
-        <p>Shares: {state.shares.toFixed(4)}</p>
+    <div className="game-page">
+        <div className="game-card">
+        
+            {/* Header */}
+            <div className="header-section">
+                <h1 className="game-title">Day {state.day}</h1>
+                <p className="game-description">
+                Ticker: <span className="ticker-symbol">{state.ticker}</span>
+                </p>
+            </div>
 
-        <div className="buttonRow">
-            <button onClick={() => setMode("buy")}>Buy</button>
-            <button onClick={() => setMode("sell")}>Sell</button>
-            <button onClick={handleHold}>Hold</button>
-            <button onClick={handleQuit}>Quit</button>
-        </div>
+            {/* Stats Section */}
+            <div className="stats-section">
+                <div className="stat-row">
+                    <span className="stat-label">Price:</span>
+                    <span className="stat-value">${state.price.toFixed(2)}</span>
+                </div>
+                <div className="stat-row">
+                    <span className="stat-label">Bank:</span>
+                    <span className="stat-value">${state.bank.toFixed(2)}</span>
+                </div>
+                <div className="stat-row">
+                    <span className="stat-label">Shares:</span>
+                    <span className="stat-value">{state.shares.toFixed(4)}</span>
+                </div>
+            </div>
+
+            {/* Action Buttons */}
+            <div className="action-section">
+                <button className="action-button" onClick={() => setMode("buy")}>Buy</button>
+                <button className="action-button" onClick={() => setMode("sell")}>Sell</button>
+                <button className="action-button" onClick={handleHold}>Hold</button>
+                <button className="quit-button" onClick={handleQuit}>Quit</button>
+            </div>
+
         </div>
     </div>
     );
+
 }
