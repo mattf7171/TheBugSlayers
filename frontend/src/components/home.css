@@ -1,0 +1,233 @@
+.home-page {
+    min-height: 100vh;
+    background: linear-gradient(135deg, #f0f7f0 0%, #e8f5e8 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  }
+  
+  .home-card {
+    background: white;
+    border-radius: 20px;
+    padding: 40px;
+    box-shadow: 0 10px 30px rgba(120, 179, 120, 0.15);
+    border: 1px solid #e0f0e0;
+    max-width: 500px;
+    width: 100%;
+    text-align: center;
+  }
+  
+  /* Header Section */
+  .header-section {
+    margin-bottom: 30px;
+  }
+  
+  .game-title {
+    color: #2d5a2d;
+    font-size: 2.5rem;
+    font-weight: 700;
+    margin-bottom: 10px;
+    text-shadow: 0 2px 4px rgba(45, 90, 45, 0.1);
+  }
+  
+  .game-description {
+    color: #5a7a5a;
+    font-size: 1.1rem;
+    margin: 0;
+    opacity: 0.9;
+  }
+  
+  /* Ticker Section */
+  .ticker-section {
+    margin-bottom: 25px;
+  }
+  
+  .section-title {
+    color: #2d5a2d;
+    font-size: 1.3rem;
+    margin-bottom: 20px;
+    font-weight: 600;
+  }
+  
+  /* Quick Select */
+  .quick-select {
+    margin-bottom: 25px;
+  }
+  
+  .quick-select-label {
+    color: #5a7a5a;
+    margin-bottom: 12px;
+    font-weight: 500;
+  }
+  
+  .ticker-buttons {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    justify-content: center;
+  }
+  
+  .ticker-btn {
+    background: #f0f7f0;
+    border: 2px solid #c8e6c8;
+    color: #2d5a2d;
+    padding: 8px 16px;
+    border-radius: 12px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: all 0.3s ease;
+  }
+  
+  .ticker-btn:hover {
+    background: #e0f0e0;
+    border-color: #a8d8a8;
+    transform: translateY(-2px);
+  }
+  
+  .ticker-btn.active {
+    background: #4caf50;
+    border-color: #4caf50;
+    color: white;
+    box-shadow: 0 4px 12px rgba(76, 175, 80, 0.3);
+  }
+  
+  /* Dropdown Section */
+  .dropdown-section {
+    margin-bottom: 20px;
+  }
+  
+  .dropdown-label {
+    display: block;
+    color: #5a7a5a;
+    margin-bottom: 8px;
+    font-weight: 500;
+  }
+  
+  .ticker-dropdown {
+    width: 100%;
+    padding: 12px 16px;
+    border: 2px solid #c8e6c8;
+    border-radius: 12px;
+    background: white;
+    color: #2d5a2d;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: border-color 0.3s ease;
+  }
+  
+  .ticker-dropdown:focus {
+    outline: none;
+    border-color: #4caf50;
+    box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.1);
+  }
+  
+  /* Selected Ticker Display */
+  .selected-ticker {
+    background: #f0f7f0;
+    border: 2px solid #c8e6c8;
+    border-radius: 12px;
+    padding: 12px 20px;
+    margin-top: 15px;
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+  }
+  
+  .selected-label {
+    color: #5a7a5a;
+    font-weight: 500;
+  }
+  
+  .ticker-symbol {
+    color: #2d5a2d;
+    font-weight: 700;
+    font-size: 1.1rem;
+  }
+  
+  /* Error Message */
+  .error-message {
+    background: #ffebee;
+    border: 2px solid #ffcdd2;
+    color: #c62828;
+    padding: 12px 20px;
+    border-radius: 12px;
+    margin-bottom: 20px;
+    font-weight: 500;
+  }
+  
+  /* Action Section */
+  .action-section {
+    margin-top: 10px;
+  }
+  
+  .start-button {
+    background: linear-gradient(135deg, #4caf50 0%, #45a049 100%);
+    color: white;
+    border: none;
+    padding: 16px 32px;
+    border-radius: 16px;
+    font-size: 1.2rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 6px 20px rgba(76, 175, 80, 0.3);
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+  }
+  
+  .start-button:hover:not(:disabled) {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 25px rgba(76, 175, 80, 0.4);
+  }
+  
+  .start-button:active:not(:disabled) {
+    transform: translateY(-1px);
+  }
+  
+  .start-button:disabled {
+    background: #cccccc;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+  }
+  
+  /* Loading Spinner */
+  .loading-spinner {
+    width: 20px;
+    height: 20px;
+    border: 2px solid transparent;
+    border-top: 2px solid white;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+  }
+  
+  @keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+  }
+  
+  /* Responsive Design */
+  @media (max-width: 600px) {
+    .home-card {
+      padding: 30px 20px;
+      margin: 10px;
+    }
+    
+    .game-title {
+      font-size: 2rem;
+    }
+    
+    .ticker-buttons {
+      gap: 8px;
+    }
+    
+    .ticker-btn {
+      padding: 6px 12px;
+      font-size: 0.9rem;
+    }
+  }
