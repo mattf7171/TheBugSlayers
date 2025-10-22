@@ -231,3 +231,161 @@
       font-size: 0.9rem;
     }
   }
+
+  /* ==== Game screen extras (match home.css look/feel) ==== */
+
+.game-card {
+  max-width: 700px; /* a bit wider than the home card */
+}
+
+/* 2x2 stat grid */
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+  margin: 10px 0 18px;
+}
+
+.stat-box {
+  background: #f0f7f0;
+  border: 2px solid #c8e6c8;
+  border-radius: 12px;
+  padding: 12px 16px;
+  text-align: left;
+}
+
+.stat-label {
+  color: #5a7a5a;
+  font-size: 0.9rem;
+  margin-bottom: 4px;
+  font-weight: 600;
+}
+
+.stat-value {
+  color: #2d5a2d;
+  font-weight: 800;
+  font-size: 1.15rem;
+}
+
+/* Button row for Sell / Hold / Quit */
+.button-row {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+}
+
+/* Outline green button (secondary) */
+.btn-outline {
+  background: #f0f7f0;
+  color: #2d5a2d;
+  border: 2px solid #c8e6c8;
+  padding: 14px 16px;
+  border-radius: 16px;
+  font-size: 1.05rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  width: 100%;
+}
+.btn-outline:hover:not(:disabled) {
+  background: #e0f0e0;
+  border-color: #a8d8a8;
+  transform: translateY(-2px);
+}
+.btn-outline:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* Destructive action (Quit) with green-friendly hue */
+.btn-danger {
+  background: #ffe9e9;
+  color: #7a1f1f;
+  border: 2px solid #f5b5b5;
+  padding: 14px 16px;
+  border-radius: 16px;
+  font-size: 1.05rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  width: 100%;
+}
+.btn-danger:hover:not(:disabled) {
+  background: #ffdada;
+  border-color: #f09c9c;
+  transform: translateY(-2px);
+}
+.btn-danger:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* Responsive tweaks */
+@media (max-width: 640px) {
+  .stats-grid {
+    grid-template-columns: 1fr;
+  }
+  .button-row {
+    grid-template-columns: 1fr;
+  }
+}
+
+
+/* ==== Game screen extras (sparkline + stat layout) ==== */
+
+.game-card {
+  max-width: 760px;
+}
+
+/* stat grid already defined above; reused */
+
+/* Sparkline card */
+.sparkline-box {
+  background: #f0f7f0;
+  border: 2px solid #c8e6c8;
+  border-radius: 12px;
+  padding: 12px 16px;
+  margin: 8px 0 18px;
+}
+
+.sparkline-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin-bottom: 6px;
+}
+
+.sparkline-title {
+  color: #2d5a2d;
+  font-weight: 700;
+  font-size: 1rem;
+}
+
+.sparkline-change {
+  font-weight: 800;
+  font-size: 0.95rem;
+}
+.sparkline-change.up { color: #2d7a2d; }
+.sparkline-change.down { color: #b33a3a; }
+
+.sparkline-canvas {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.sparkline-empty {
+  color: #5a7a5a;
+  font-size: 0.95rem;
+}
+
+/* Responsive tweak: keep sparkline readable */
+@media (max-width: 640px) {
+  .sparkline-canvas svg {
+    width: 100% !important;
+    height: 60px !important;
+  }
+}
+
