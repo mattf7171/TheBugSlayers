@@ -154,7 +154,7 @@ export default function BuySellScreen({ mode = "buy", max = 0, price = 0, onSubm
             )}
             {/* Text */}
             <text x={cx} y={cy - 6} textAnchor="middle" fontSize="16" fill="#2d5a2d" fontWeight="700">
-              {isBuy ? `$${amount.toFixed(2)}` : `${amount.toFixed(4)} sh`}
+              {isBuy ? `$${amount.toFixed(2)}` : `${amount.toFixed(4)} shares`}
             </text>
             <text x={cx} y={cy + 14} textAnchor="middle" fontSize="12" fill="#5a7a5a">
               {Math.round(pct * 100)}% of {isBuy ? "bank" : "position"}
