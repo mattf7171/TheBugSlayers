@@ -1,6 +1,7 @@
 // src/components/Game.js
 import React, { useEffect, useMemo, useState } from "react";
 import BuySellScreen from "./buySellScreen";
+import GameSummary from "./gameSummary";
 import axios from "axios";
 import "./home.css"; // reuse the home styles
 
@@ -12,6 +13,7 @@ export default function Game({ gameState, onExit }) {
   const [mode, setMode] = useState(""); // "buy", "sell", or ""
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [isGameOver, setIsGameOver] = useState(false);
 
   // Ensure the current price is in history at mount
   useEffect(() => {
@@ -97,10 +99,7 @@ export default function Game({ gameState, onExit }) {
     const finalCash = state.shares * state.price;
     const totalBank = state.bank + finalCash;
     const gain = totalBank - 10000;
-    alert(
-      `Game Over!\nTotal Gain/Loss: $${gain.toFixed(2)}\nDays Played: ${state.day}`
-    );
-    onExit();
+    setIsGameOver(true);
   };
 
   // Buy/Sell, then auto-advance a day
@@ -172,6 +171,10 @@ export default function Game({ gameState, onExit }) {
         onCancel={() => setMode("")}
       />
     );
+  }
+
+  if (isGameOver) {
+    return <GameSummary state={state} onExit={onExit} />
   }
 
   // ----- Main Game Screen (matching home.css) -----
