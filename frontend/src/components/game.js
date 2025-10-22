@@ -259,9 +259,7 @@ export default function Game({ gameState, onExit }) {
           </div>
         </div>
 
-        <p className="game-description" style={{ marginTop: 10 }}>
-          Tip: Use <strong>Buy</strong> or <strong>Sell</strong> for three synchronized input options.
-        </p>
+        
       </div>
     </div>
   );
