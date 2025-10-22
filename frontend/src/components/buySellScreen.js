@@ -121,7 +121,7 @@ export default function BuySellScreen({ mode = "buy", max = 0, price = 0, onSubm
       <div className="home-card buysell-card">
         <div className="header-section">
           <h1 className="game-title">{isBuy ? "Buy" : "Sell"} {isBuy ? "with Cash" : "Shares"}</h1>
-          <p className="game-description">Use any control below — they stay in sync in real time.</p>
+          <p className="game-description">Make the right decision!</p>
         </div>
 
         <div className="buysell-grid">
