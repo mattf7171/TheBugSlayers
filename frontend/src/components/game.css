@@ -1,0 +1,126 @@
+.game-page {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #f0f7f0 0%, #e8f5e8 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.game-card {
+  background: white;
+  border-radius: 20px;
+  padding: 40px;
+  box-shadow: 0 10px 30px rgba(120, 179, 120, 0.15);
+  border: 1px solid #e0f0e0;
+  max-width: 500px;
+  width: 100%;
+  text-align: center;
+}
+
+/* Header Section */
+.header-section {
+  margin-bottom: 30px;
+}
+
+.game-title {
+  color: #2d5a2d;
+  font-size: 2.5rem;
+  font-weight: 700;
+  margin-bottom: 10px;
+  text-shadow: 0 2px 4px rgba(45, 90, 45, 0.1);
+}
+
+.game-description {
+  color: #5a7a5a;
+  font-size: 1.1rem;
+  margin: 0;
+  opacity: 0.9;
+}
+
+/* Stats Section */
+.stats-section {
+  margin-bottom: 25px;
+}
+
+.stat-row {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 12px;
+  padding: 8px 16px;
+  background: #f0f7f0;
+  border: 2px solid #c8e6c8;
+  border-radius: 12px;
+}
+
+.stat-label {
+  color: #5a7a5a;
+  font-weight: 500;
+}
+
+.stat-value {
+  color: #2d5a2d;
+  font-weight: 700;
+}
+
+/* Action Buttons */
+.action-section {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  justify-content: center;
+  margin-top: 20px;
+}
+
+.action-button {
+  background: #f0f7f0;
+  border: 2px solid #c8e6c8;
+  color: #2d5a2d;
+  padding: 12px 24px;
+  border-radius: 12px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: all 0.3s ease;
+  flex: 1 1 40%;
+  max-width: 200px;
+}
+
+.action-button:hover {
+  background: #e0f0e0;
+  border-color: #a8d8a8;
+  transform: translateY(-2px);
+}
+
+.quit-button {
+  background: #ffebee;
+  border: 2px solid #ffcdd2;
+  color: #c62828;
+}
+
+.quit-button:hover {
+  background: #ffcdd2;
+  border-color: #e57373;
+}
+
+/* Responsive Design */
+@media (max-width: 600px) {
+  .game-card {
+    padding: 30px 20px;
+    margin: 10px;
+  }
+
+  .game-title {
+    font-size: 2rem;
+  }
+
+  .action-button {
+    padding: 10px 16px;
+    font-size: 0.95rem;
+  }
+
+  .stat-row {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}
