@@ -63,6 +63,16 @@ recordRoutes.route("/record/add").post(async (req, res) => {
     try {
         const db_connect = dbo.getDb();
         const { userName, password, userType } = req.body;
+        console.log('Username:', userName);
+
+        const existingUser = await db_connect.collection("records").findOne({ userName });
+        console.log('existing username:', existingUser)
+        if (existingUser) {
+            return res.status(409).json({
+                success: false,
+                message: "Username already exists."
+            });
+        }
 
         // Generate salt and hash the password
         const salt = generateSalt();
