@@ -127,24 +127,38 @@ export default function History() {
                   </tr>
                 </thead>
                 <tbody>
-                  {filteredItems.map((t) => (
-                    <tr key={t._id}>
-                      <td>{t.createdAt ? new Date(t.createdAt).toLocaleString() : ""}</td>
-                      <td>{t.type}</td>
-                      <td>{t.fromAccount || "-"}</td>
-                      <td>{t.toAccount || "-"}</td>
-                      <td style={{ textAlign: "right" }}>${toMoney(t.amount)}</td>
-                      <td>{t.category}</td>
-                    </tr>
-                  ))}
-                  {filteredItems.length === 0 && (
-                    <tr>
-                      <td colSpan={6} style={{ textAlign: "center", padding: 12 }}>
-                        No transactions match the filter.
-                      </td>
-                    </tr>
-                  )}
-                </tbody>
+                    {filteredItems.map((t) => {
+                        const isTransfer = t.type === "transfer";
+                        const isOut = t.direction === "out";
+                        const isIn = t.direction === "in";
+                        const fromText = isIn && t.fromUserName
+                        ? `${t.fromAccount || "-"} ← ${t.fromUserName}`
+                        : t.fromAccount || "-";
+                        const toText = isOut && t.toUserName
+                        ? `${t.toAccount || "-"} → ${t.toUserName}`
+                        : t.toAccount || "-";
+
+                        return (
+                        <tr key={t._id}>
+                            <td>{t.createdAt ? new Date(t.createdAt).toLocaleString() : ""}</td>
+                            <td>
+                            {isTransfer ? (isOut ? "transfer out" : isIn ? "transfer in" : "transfer") : t.type}
+                            </td>
+                            <td>{fromText}</td>
+                            <td>{toText}</td>
+                            <td style={{ textAlign: "right" }}>${Number(t.amount || 0).toFixed(2)}</td>
+                            <td>{t.category}</td>
+                        </tr>
+                        );
+                    })}
+                    {filteredItems.length === 0 && (
+                        <tr>
+                        <td colSpan={6} style={{ textAlign: "center", padding: 12 }}>
+                            No transactions match the filter.
+                        </td>
+                        </tr>
+                    )}
+                    </tbody>
               </table>
             </div>
           </div>

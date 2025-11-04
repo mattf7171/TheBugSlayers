@@ -219,44 +219,67 @@ routes.post("/money/transfer", requireLogin, async (req, res) => {
 
   await ensureCategory(db, user._id, category);
 
-  // Inter-user if recipient is specified
-  if (toUserName || toUserId) {
-    const recipient = toUserId
-      ? await db.collection("records").findOne({ _id: new ObjectId(toUserId) })
-      : await db.collection("records").findOne({ userName: String(toUserName) });
+  // --- Inter-user transfer ---
+if (toUserName || toUserId) {
+  const recipient = toUserId
+    ? await db.collection("records").findOne({ _id: new ObjectId(toUserId) })
+    : await db.collection("records").findOne({ userName: String(toUserName) });
 
-    if (!recipient) return res.status(404).json({ message: "Recipient not found" });
+  if (!recipient) return res.status(404).json({ message: "Recipient not found" });
 
-    const destKey = INDEX_TO_ACCOUNT[Number(toAccountIndex)];
-    if (!VALID_ACCOUNTS.includes(destKey)) {
-      return res.status(400).json({ message: "Invalid destination account index" });
-    }
+  const destKey = INDEX_TO_ACCOUNT[Number(toAccountIndex)];
+  if (!VALID_ACCOUNTS.includes(destKey)) {
+    return res.status(400).json({ message: "Invalid destination account index" });
+  }
 
-    // withdraw from sender
-    const r1 = await applyBalanceChange(db, user, fromAccount, -amt);
-    if (!r1.ok) return res.status(400).json({ message: r1.reason });
+  // withdraw from sender
+  const r1 = await applyBalanceChange(db, user, fromAccount, -amt);
+  if (!r1.ok) return res.status(400).json({ message: r1.reason });
 
-    // deposit to recipient
-    const r2 = await applyBalanceChange(db, recipient, destKey, +amt);
-    if (!r2.ok) {
-      // rollback sender (best-effort)
-      await applyBalanceChange(db, user, fromAccount, +amt);
-      return res.status(400).json({ message: "Transfer failed" });
-    }
+  // deposit to recipient
+  const r2 = await applyBalanceChange(db, recipient, destKey, +amt);
+  if (!r2.ok) {
+    // rollback sender (best-effort)
+    await applyBalanceChange(db, user, fromAccount, +amt);
+    return res.status(400).json({ message: "Transfer failed" });
+  }
 
-    await db.collection("transactions").insertOne({
+  const now = new Date();
+  const cat = normalizeCategory(category);
+
+  // Write two transaction documents: one for sender, one for recipient
+  await db.collection("transactions").insertMany([
+    {
+      // Sender's perspective
       userId: user._id,
       type: "transfer",
+      direction: "out",
       fromAccount,
       toAccount: destKey,
       toUserId: recipient._id,
+      toUserName: recipient.userName,
       amount: +amt,
-      category: normalizeCategory(category),
-      createdAt: new Date(),
-    });
+      category: cat,
+      createdAt: now,
+    },
+    {
+      // Recipient's perspective
+      userId: recipient._id,
+      type: "transfer",
+      direction: "in",
+      fromAccount,                 // from sender's account
+      fromUserId: user._id,
+      fromUserName: user.userName,
+      toAccount: destKey,          // to recipient's account
+      amount: +amt,
+      category: cat,
+      createdAt: now,
+    },
+  ]);
 
-    return res.json({ success: true });
-  }
+  return res.json({ success: true });
+}
+
 
   // Intra-user
   if (!VALID_ACCOUNTS.includes(toAccount)) {
