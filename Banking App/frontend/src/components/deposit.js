@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-
+import "./deposit.css";
 export default function Deposit() {
     const [amount, setAmount] = useState("");
     const [account, setAccount] = useState("");
@@ -21,7 +21,7 @@ export default function Deposit() {
 
     async function fetchAccounts() {
         try {
-            const response = await fetch("http://localhost:4001/banking/accounts", {
+            const response = await fetch("http://localhost:5001/banking/accounts", {
                 credentials: "include"
             });
             if (response.ok) {
@@ -36,7 +36,7 @@ export default function Deposit() {
 
     async function fetchCategories() {
         try {
-            const response = await fetch("http://localhost:4001/banking/categories", {
+            const response = await fetch("http://localhost:5001/banking/categories", {
                 credentials: "include"
             });
             if (response.ok) {
@@ -58,7 +58,7 @@ export default function Deposit() {
         }
 
         try {
-            const response = await fetch("http://localhost:4001/banking/deposit", {
+            const response = await fetch("http://localhost:5001/banking/deposit", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 credentials: "include",
@@ -90,7 +90,7 @@ export default function Deposit() {
         if (!newCategory.trim()) return;
 
         try {
-            const response = await fetch("http://localhost:4001/banking/categories", {
+            const response = await fetch("http://localhost:5001/banking/categories", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 credentials: "include",

@@ -9,7 +9,7 @@ export default function History() {
     useEffect(() => {
         async function fetchSession() {
             try {
-                const response = await fetch("http://localhost:4001/session_get", {
+                const response = await fetch("http://localhost:5001/session_get", {
                     method: "GET",
                     credentials: "include",
                 });
@@ -25,7 +25,7 @@ export default function History() {
                     const username = match[1];
 
                     // Now fetch full user info from DB
-                    const userResponse = await fetch(`http://localhost:4001/record`);
+                    const userResponse = await fetch(`http://localhost:5001/record`);
                     const allUsers = await userResponse.json();
                     const currentUser = allUsers.find(u => u.userName === username);
 

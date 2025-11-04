@@ -7,11 +7,11 @@ const MongoStore = require("connect-mongo");
 
 require("dotenv").config({ path: "./config.env"});
 
-const port = process.env.PORT || 4001; 
+const port = process.env.PORT || 5001; 
 
 app.use(cors( 
     {
-        origin: "http://localhost:3000",
+        origin: "http://localhost:3001",
         methods: "GET, HEAD, PUT, PATCH, POST, DELETE",
         credentials: true,
         optionsSuccessStatus: 204,

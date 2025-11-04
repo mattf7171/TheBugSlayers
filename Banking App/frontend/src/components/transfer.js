@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-
+import './transfer.css';
 export default function Transfer() {
     const [amount, setAmount] = useState("");
     const [fromAccount, setFromAccount] = useState("");
@@ -24,7 +24,7 @@ export default function Transfer() {
 
     async function fetchAccounts() {
         try {
-            const response = await fetch("http://localhost:4001/banking/accounts", {
+            const response = await fetch("http://localhost:5001/banking/accounts", {
                 credentials: "include"
             });
             if (response.ok) {
@@ -42,7 +42,7 @@ export default function Transfer() {
 
     async function fetchCategories() {
         try {
-            const response = await fetch("http://localhost:4001/banking/categories", {
+            const response = await fetch("http://localhost:5001/banking/categories", {
                 credentials: "include"
             });
             if (response.ok) {
@@ -69,7 +69,7 @@ export default function Transfer() {
         }
 
         try {
-            const response = await fetch("http://localhost:4001/banking/transfer", {
+            const response = await fetch("http://localhost:5001/banking/transfer", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 credentials: "include",
@@ -103,7 +103,7 @@ export default function Transfer() {
         if (!newCategory.trim()) return;
 
         try {
-            const response = await fetch("http://localhost:4001/banking/categories", {
+            const response = await fetch("http://localhost:5001/banking/categories", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 credentials: "include",
@@ -243,7 +243,7 @@ export default function Transfer() {
                 </button>
             </div>
 
-            {/* Category Creation Modal */}
+            {/* category creation modal */}
             {showCategoryModal && (
                 <div className="modal-overlay">
                     <div className="modal">

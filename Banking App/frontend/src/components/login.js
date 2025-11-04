@@ -7,7 +7,7 @@ export default function Login() {
     useEffect(() => {
         async function clearSession() {
             try {
-                await fetch("http://localhost:4001/session_delete", {
+                await fetch("http://localhost:5001/session_delete", {
                     method: "GET",
                     credentials: "include",
                 });
@@ -40,7 +40,7 @@ export default function Login() {
         const { userName, password } = form;
 
         try {
-            const response = await fetch("http://localhost:4001/record/login", {
+            const response = await fetch("http://localhost:5001/record/login", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ userName, password }),
