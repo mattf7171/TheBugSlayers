@@ -5,7 +5,7 @@ export default function SessionSet() {
 
     useEffect(() => {
         async function run() {
-            const response = await fetch(`http://localhost:4000/session_set`,
+            const response = await fetch(`http://localhost:4001/session_set`,
                 {
                     method: "GET",
                     credentials: 'include'

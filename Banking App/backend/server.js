@@ -7,7 +7,7 @@ const MongoStore = require("connect-mongo");
 
 require("dotenv").config({ path: "./config.env"});
 
-const port = process.env.PORT;
+const port = process.env.PORT || 4001; 
 
 app.use(cors( 
     {
