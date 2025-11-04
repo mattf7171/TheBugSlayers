@@ -1,41 +1,44 @@
-
-const { MongoClient, ServerApiVersion } = require('mongodb');
+// backend/db/conn.js
+const { MongoClient, ServerApiVersion } = require("mongodb");
 const uri = process.env.ATLAS_URI;
 
 let _db;
+let _client;
 
 module.exports = {
-    connectToServer: function(callback) {
-        console.log("Attempting to connect...");
-        // Create a MongoClient with a MongoClientOptions object to set the Stable API version
-        const client = new MongoClient(uri, {
-        serverApi: {
-            version: ServerApiVersion.v1,
-            strict: true,
-            deprecationErrors: true,
-        }
-        });
+  connectToServer: function (callback) {
+    console.log("Attempting to connect...");
+    const client = new MongoClient(uri, {
+      serverApi: {
+        version: ServerApiVersion.v1,
+        strict: true,
+        deprecationErrors: true,
+      },
+    });
 
-        async function run() {
-        try {
-            // Connect the client to the server	(optional starting in v4.7)
-            await client.connect();
-            // Send a ping to confirm a successful connection
-            await client.db("admin").command({ ping: 1 });
-            console.log("Pinged your deployment. You successfully connected to MongoDB!");
-            _db = client.db("employees");
-            console.log("Successfully connected to employees collection");
-        } finally {
-            // Ensures that the client will close when you finish/error
-            //console.log("Closing the client...");
-            //await client.close();
-        }
-        }
-        run().catch(console.dir);
-    },
+    (async () => {
+      try {
+        await client.connect();
+        // Ping
+        await client.db().admin().command({ ping: 1 });
+        // Use DB from URI path (…/bankapp) or fallback
+        const dbNameFromUri = (new URL(uri)).pathname.replace("/", "") || "bankapp";
+        _db = client.db(dbNameFromUri);
+        _client = client;
+        console.log(`Ping OK. Connected to MongoDB database "${dbNameFromUri}".`);
+        callback(); // no error
+      } catch (err) {
+        console.error("Mongo connection error:", err);
+        callback(err); // pass the error so server won't start
+      }
+      // DO NOT close the client; keep it for app lifetime
+    })();
+  },
 
-    getDb: function() {
-        return _db
-    }
+  getDb: function () {
+    return _db;
+  },
+  getClient: function () {
+    return _client;
+  },
 };
-

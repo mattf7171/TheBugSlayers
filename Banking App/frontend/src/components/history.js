@@ -1,69 +1,181 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import "./accounts.css"; // reuse the same design system
+import { PieChart, Pie, Tooltip, ResponsiveContainer, Cell } from "recharts";
+
+const API = "http://localhost:4000";
 
 export default function History() {
-    const [user, setUser] = useState(null);
-    const [error, setError] = useState("");
-    const navigate = useNavigate();
+  const [items, setItems] = useState([]);
+  const [summary, setSummary] = useState([]);
+  const [userName, setUserName] = useState("");
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(true);
 
-    useEffect(() => {
-        async function fetchSession() {
-            try {
-                const response = await fetch("http://localhost:4000/session_get", {
-                    method: "GET",
-                    credentials: "include",
-                });
+  // simple local filter for account view
+  const [accountFilter, setAccountFilter] = useState("all"); // all|checking|savings|other
 
-                if (!response.ok) {
-                    throw new Error("Failed to fetch session.");
-                }
+  const navigate = useNavigate();
 
-                const data = await response.json();
-                const match = data.status.match(/Session username is: (\w+)/);
-
-                if (match) {
-                    const username = match[1];
-
-                    // Now fetch full user info from DB
-                    const userResponse = await fetch(`http://localhost:4000/record`);
-                    const allUsers = await userResponse.json();
-                    const currentUser = allUsers.find(u => u.userName === username);
-
-                    if (currentUser) {
-                        setUser(currentUser);
-                    } else {
-                        setError("User not found.");
-                    }
-                } else {
-                    setError("No active session.");
-                }
-            } catch (err) {
-                console.error(err);
-                setError("Error retrieving user info.");
-            }
+  useEffect(() => {
+    async function boot() {
+      try {
+        const s = await fetch(`${API}/session_get`, { credentials: "include" });
+        const sjson = await s.json();
+        const match = sjson.status.match(/Session username is: (\w+)/);
+        if (!match) {
+          setError("No active session.");
+          setLoading(false);
+          return;
         }
+        setUserName(match[1]);
 
-        fetchSession();
-    }, []);
+        // full history
+        const h = await fetch(`${API}/bank/history/all?limit=500`, { credentials: "include" });
+        const hjson = await h.json();
+        if (!h.ok) throw new Error(hjson.message || "Failed to load history");
+        setItems(hjson.items || []);
 
-    async function handleReturn() {
-        navigate("/accounts");
+        // category summary
+        const sum = await fetch(`${API}/bank/history/summary/categories`, { credentials: "include" });
+        const sjson2 = await sum.json();
+        if (!sum.ok) throw new Error(sjson2.message || "Failed to load summary");
+        const chartData = (sjson2.summary || []).map((row) => ({
+          name: row.category || "(uncategorized)",
+          value: Math.max(0.01, Number(row.totalDeposits) + Number(row.totalWithdrawals)),
+        }));
+        setSummary(chartData);
+      } catch (e) {
+        console.error(e);
+        setError("Error retrieving history.");
+      } finally {
+        setLoading(false);
+      }
     }
+    boot();
+  }, []);
 
+  function toMoney(n) {
+    return Number(n || 0).toFixed(2);
+  }
+
+  const filteredItems =
+    accountFilter === "all"
+      ? items
+      : items.filter(
+          (t) => t.fromAccount === accountFilter || t.toAccount === accountFilter
+        );
+
+  if (loading) {
     return (
-    <div>
-        {user ? (
-        <>
-            <h3>Here is the history page!</h3>
-            <br />
-            <button onClick={handleReturn}>Return to account</button>
-        </>
-        ) : error ? (
-        <p style={{ color: "red" }}>{error}</p>
-        ) : (
-        <p>Loading user info...</p>
-        )}
-    </div>
+      <div className="accounts-container">
+        <div className="accounts-card"><p>Loading…</p></div>
+      </div>
     );
+  }
 
+  return (
+    <div className="accounts-container">
+      <div className="accounts-card">
+        <h2 className="accounts-title">Bugslayers Banking</h2>
+        <p className="accounts-subtitle">Transaction History — {userName}</p>
+
+        <div className="accounts-actions">
+          <button className="btn secondary" onClick={() => navigate("/accounts")}>
+            Back to Accounts
+          </button>
+        </div>
+
+        {error && <div className="error-banner">{error}</div>}
+
+        {/* Controls */}
+        <div className="form-card" style={{ marginBottom: 16 }}>
+          <div className="form-row">
+            <div className="form-group">
+              <label className="label">Filter by Account</label>
+              <select
+                className="select"
+                value={accountFilter}
+                onChange={(e) => setAccountFilter(e.target.value)}
+              >
+                <option value="all">All accounts</option>
+                <option value="checking">Checking</option>
+                <option value="savings">Savings</option>
+                <option value="other">Other</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <div
+          className="forms-grid"
+          style={{ gridTemplateColumns: "1.1fr .9fr", marginTop: 0 }}
+        >
+          {/* Table */}
+          <div className="form-card" style={{ maxHeight: 520, overflow: "auto" }}>
+            <h4 className="form-title">Transactions</h4>
+            <div className="table-wrap" style={{ border: "none" }}>
+              <table className="table">
+                <thead>
+                  <tr>
+                    <th>Date/Time</th>
+                    <th>Type</th>
+                    <th>From</th>
+                    <th>To</th>
+                    <th style={{ textAlign: "right" }}>Amount</th>
+                    <th>Category</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filteredItems.map((t) => (
+                    <tr key={t._id}>
+                      <td>{t.createdAt ? new Date(t.createdAt).toLocaleString() : ""}</td>
+                      <td>{t.type}</td>
+                      <td>{t.fromAccount || "-"}</td>
+                      <td>{t.toAccount || "-"}</td>
+                      <td style={{ textAlign: "right" }}>${toMoney(t.amount)}</td>
+                      <td>{t.category}</td>
+                    </tr>
+                  ))}
+                  {filteredItems.length === 0 && (
+                    <tr>
+                      <td colSpan={6} style={{ textAlign: "center", padding: 12 }}>
+                        No transactions match the filter.
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          {/* Chart */}
+          <div className="form-card">
+            <h4 className="form-title">Breakdown by Category</h4>
+            {summary.length === 0 ? (
+              <p>No data.</p>
+            ) : (
+              <div style={{ width: "100%", height: 360 }}>
+                <ResponsiveContainer>
+                  <PieChart>
+                    <Pie data={summary} dataKey="value" nameKey="name" label />
+                    <Tooltip />
+                    {summary.map((_, i) => (
+                      <Cell key={i} />
+                    ))}
+                  </PieChart>
+                </ResponsiveContainer>
+              </div>
+            )}
+          </div>
+        </div>
+
+        <div className="footer-actions">
+          <button className="btn secondary" onClick={() => navigate("/accounts")}>
+            Return to Accounts
+          </button>
+        </div>
+      </div>
+    </div>
+  );
 }

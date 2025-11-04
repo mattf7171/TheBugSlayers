@@ -1,0 +1,207 @@
+/* Accounts.css — match the login/register design language */
+
+body {
+  margin: 0;
+  padding: 0;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background: linear-gradient(135deg, #f0f7f0 0%, #e8f5e8 100%);
+  min-height: 100vh;
+}
+
+/* Centering container */
+.accounts-container {
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  min-height: 100vh;
+  padding: 32px 20px;
+}
+
+/* Card layout */
+.accounts-card {
+  background: white;
+  border-radius: 20px;
+  padding: 28px;
+  box-shadow: 0 10px 30px rgba(120, 179, 120, 0.15);
+  border: 1px solid #e0f0e0;
+  width: 100%;
+  max-width: 1080px;
+}
+
+/* Titles */
+.accounts-title {
+  color: #2d5a2d;
+  font-size: 2rem;
+  font-weight: 700;
+  margin: 0 0 6px 0;
+  text-shadow: 0 2px 4px rgba(45, 90, 45, 0.1);
+}
+
+.accounts-subtitle {
+  color: #5a7a5a;
+  font-size: 1rem;
+  margin: 0 0 20px 0;
+  opacity: 0.95;
+}
+
+/* Top actions row */
+.accounts-actions {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 18px;
+  flex-wrap: wrap;
+}
+
+/* Buttons (same vibe as login/register) */
+.btn {
+  background: linear-gradient(135deg, #4caf50 0%, #45a049 100%);
+  color: white;
+  border: none;
+  padding: 12px 18px;
+  border-radius: 14px;
+  font-size: 1rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  box-shadow: 0 6px 20px rgba(76, 175, 80, 0.3);
+}
+
+.btn.secondary {
+  background: #f0f7f0;
+  color: #2d5a2d;
+  border: 2px solid #c8e6c8;
+  box-shadow: none;
+}
+
+.btn:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(76, 175, 80, 0.35);
+}
+
+.btn.secondary:hover:not(:disabled) {
+  background: #e0f0e0;
+  border-color: #a8d8a8;
+  transform: translateY(-2px);
+}
+
+/* Error / info */
+.error-banner {
+  background: #ffebee;
+  border: 2px solid #ffcdd2;
+  color: #c62828;
+  padding: 12px 16px;
+  border-radius: 12px;
+  margin-bottom: 16px;
+  font-weight: 600;
+}
+
+/* Balances table */
+.table-wrap {
+  overflow: auto;
+  border: 1px solid #e8f5e8;
+  border-radius: 14px;
+  margin-bottom: 18px;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.table th, .table td {
+  padding: 12px 14px;
+  border-bottom: 1px solid #eef6ef;
+}
+
+.table th {
+  text-align: left;
+  color: #2d5a2d;
+  font-weight: 700;
+  background: #f7fbf7;
+}
+
+.table td {
+  color: #355a35;
+}
+
+/* Forms grid */
+.forms-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 18px;
+  margin-top: 10px;
+}
+
+.form-card {
+  border: 1px solid #e0f0e0;
+  border-radius: 14px;
+  padding: 16px;
+  background: #ffffff;
+}
+
+.form-title {
+  margin: 0 0 10px 0;
+  color: #2d5a2d;
+  font-size: 1.15rem;
+  font-weight: 700;
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+
+.form-group {
+  margin-bottom: 12px;
+}
+
+.label {
+  display: block;
+  color: #5a7a5a;
+  margin-bottom: 6px;
+  font-weight: 600;
+}
+
+.input, .select {
+  width: 100%;
+  padding: 12px 14px;
+  border: 2px solid #c8e6c8;
+  border-radius: 12px;
+  background: white;
+  color: #2d5a2d;
+  font-size: 1rem;
+  transition: border-color 0.2s ease;
+  box-sizing: border-box;
+}
+
+.input:focus, .select:focus {
+  outline: none;
+  border-color: #4caf50;
+  box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.1);
+}
+
+/* Other label row */
+.other-label-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* History/Logout row */
+.footer-actions {
+  margin-top: 14px;
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+/* Responsive */
+@media (max-width: 860px) {
+  .forms-grid {
+    grid-template-columns: 1fr;
+  }
+  .form-row {
+    grid-template-columns: 1fr;
+  }
+}
