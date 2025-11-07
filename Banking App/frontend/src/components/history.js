@@ -41,20 +41,28 @@ export default function History() {
         if (!match) throw new Error("No active session.");
         setUserName(match[1]);
 
+        // Full history (table)
         const h = await fetch(`${API}/bank/history/all?limit=500`, { credentials: "include" });
         const hjson = await h.json();
         if (!h.ok) throw new Error(hjson.message || "Failed to load history");
         setItems(hjson.items || []);
 
+        // Summary for chart
         const sum = await fetch(`${API}/bank/history/summary/categories`, { credentials: "include" });
         const sjson2 = await sum.json();
         if (!sum.ok) throw new Error(sjson2.message || "Failed to load summary");
 
-        const chartData = (sjson2.summary || []).map((row) => {
-          const name = row.category || "(uncategorized)";
-          const value = Math.max(0.01, Number(row.totalDeposits) + Number(row.totalWithdrawals));
-          return { name, value, fill: colorForCategory(name) };
-        });
+        // Build chart data WITHOUT a minimum clamp and drop zero-value categories
+        const chartData = (sjson2.summary || [])
+          .map((row) => {
+            const name = row.category || "(uncategorized)";
+            // Use absolute totals so categories are positive; adjust if your API already returns absolutes.
+            const total = Number(row.totalDeposits || 0) + Number(row.totalWithdrawals || 0);
+            const value = Math.round(total * 100) / 100; // round to cents
+            return { name, value, fill: colorForCategory(name) };
+          })
+          .filter((d) => d.value > 0); // drop zeros so there are no phantom slivers
+
         setSummary(chartData);
       } catch (e) {
         setError("Error retrieving history.");
@@ -65,7 +73,9 @@ export default function History() {
     boot();
   }, []);
 
-  function toMoney(n) { return Number(n || 0).toFixed(2); }
+  function toMoney(n) {
+    return Number(n || 0).toFixed(2);
+  }
 
   const filteredItems =
     accountFilter === "all"
@@ -129,12 +139,14 @@ export default function History() {
                     const isTransfer = t.type === "transfer";
                     const isOut = t.direction === "out";
                     const isIn = t.direction === "in";
-                    const fromText = isIn && t.fromUserName
-                      ? `${t.fromAccount || "-"} ← ${t.fromUserName}`
-                      : t.fromAccount || "-";
-                    const toText = isOut && t.toUserName
-                      ? `${t.toAccount || "-"} → ${t.toUserName}`
-                      : t.toAccount || "-";
+                    const fromText =
+                      isIn && t.fromUserName
+                        ? `${t.fromAccount || "-"} ← ${t.fromUserName}`
+                        : t.fromAccount || "-";
+                    const toText =
+                      isOut && t.toUserName
+                        ? `${t.toAccount || "-"} → ${t.toUserName}`
+                        : t.toAccount || "-";
 
                     return (
                       <tr key={t._id}>
@@ -159,7 +171,7 @@ export default function History() {
             </div>
           </div>
 
-          {/* Colorful Pie */}
+          {/* Colorful Pie with currency formatting */}
           <div className="form-card">
             <h4 className="form-title">Breakdown by Category</h4>
             {summary.length === 0 ? (
@@ -172,14 +184,18 @@ export default function History() {
                       data={summary}
                       dataKey="value"
                       nameKey="name"
-                      label={({ name }) => name}
+                      // Label shows name + money with $ sign
+                      label={({ name, value }) => `${name} ($${Number(value).toFixed(2)})`}
                       labelLine
                     >
                       {summary.map((entry, i) => (
                         <Cell key={i} fill={entry.fill} />
                       ))}
                     </Pie>
-                    <Tooltip />
+                    {/* Tooltip with currency */}
+                    <Tooltip
+                      formatter={(value, name) => [`$${Number(value).toFixed(2)}`, name]}
+                    />
                     <Legend />
                   </PieChart>
                 </ResponsiveContainer>
