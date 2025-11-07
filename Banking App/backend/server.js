@@ -10,7 +10,7 @@ const dbo = require("./db/conn");
 
 app.use(
   cors({
-    origin: "http://localhost:3000",
+    origin: ["http://localhost:3000", "http://localhost:5173"],
     methods: "GET, HEAD, PUT, PATCH, POST, DELETE",
     credentials: true,
     optionsSuccessStatus: 204,
@@ -38,6 +38,8 @@ app.use(express.json());
 app.use(require("./routes/record"));
 app.use(require("./routes/session"));
 app.use("/bank", require("./routes/bank"));
+app.use(require("./routes/bank_other"));
+
 
 // Only start listening after DB is connected
 dbo.connectToServer((err) => {

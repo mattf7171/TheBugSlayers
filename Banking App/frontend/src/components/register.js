@@ -37,7 +37,7 @@ export default function Register() {
 
         try {
             // Step 1: Register the user
-            const registerRes = await fetch("http://localhost:4000/record/add", {
+            const registerRes = await fetch("http://localhost:4001/record/add", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify(newPerson),
@@ -50,7 +50,7 @@ export default function Register() {
             }
 
             // Step 2: Log the user in to set session
-            const loginRes = await fetch("http://localhost:4000/record/login", {
+            const loginRes = await fetch("http://localhost:4001/record/login", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ userName, password }),
