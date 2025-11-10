@@ -7,7 +7,7 @@ export default function SessionDelete() {
 
     useEffect(() => {
         async function run() {
-            const response = await fetch(`http://localhost:4000/session_delete`,
+            const response = await fetch(`http://localhost:4001/session_delete`,
                 {
                     method: "GET",
                     credentials: 'include'

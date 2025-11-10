@@ -1,0 +1,285 @@
+/* Accounts.css  */
+
+/* Page background + base font */
+body {
+  margin: 0;
+  padding: 0;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background: linear-gradient(135deg, #f0f7f0 0%, #e8f5e8 100%);
+  min-height: 100vh;
+}
+
+/* Center page content (below navbar) */
+.accounts-container {
+  display: flex;
+  align-items: center;               /* centered vertically */
+  justify-content: center;           /* centered horizontally */
+  min-height: calc(100vh - 64px);    /* minus navbar height */
+  padding: 24px 20px;
+}
+
+/* Card layout */
+.accounts-card {
+  background: white;
+  border-radius: 20px;
+  padding: 28px;
+  box-shadow: 0 10px 30px rgba(120, 179, 120, 0.15);
+  border: 1px solid #e0f0e0;
+  width: 100%;
+  max-width: 1080px; /* feel free to tweak narrower/wider per screen */
+}
+
+/* Titles */
+.accounts-title {
+  color: #2d5a2d;
+  font-size: 2rem;
+  font-weight: 700;
+  margin: 0 0 6px 0;
+  text-shadow: 0 2px 4px rgba(45, 90, 45, 0.1);
+}
+
+.accounts-subtitle {
+  color: #5a7a5a;
+  font-size: 1rem;
+  margin: 0 0 20px 0;
+  opacity: 0.95;
+}
+
+/* Actions row */
+.accounts-actions {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 18px;
+  flex-wrap: wrap;
+}
+
+/* Buttons */
+.btn {
+  background: linear-gradient(135deg, #4caf50 0%, #45a049 100%);
+  color: white;
+  border: none;
+  padding: 12px 18px;
+  border-radius: 14px;
+  font-size: 1rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  box-shadow: 0 6px 20px rgba(76, 175, 80, 0.3);
+}
+.btn:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(76, 175, 80, 0.35);
+}
+.btn:disabled { opacity: .65; cursor: not-allowed; }
+
+.btn.secondary {
+  background: #f0f7f0;
+  color: #2d5a2d;
+  border: 2px solid #c8e6c8;
+  box-shadow: none;
+}
+.btn.secondary:hover:not(:disabled) {
+  background: #e0f0e0;
+  border-color: #a8d8a8;
+  transform: translateY(-2px);
+}
+
+/* Error + Success banners */
+.error-banner {
+  background: #ffebee;
+  border: 2px solid #ffcdd2;
+  color: #c62828;
+  padding: 12px 16px;
+  border-radius: 12px;
+  margin-bottom: 16px;
+  font-weight: 600;
+}
+
+/* Slide-in success animation */
+@keyframes slideInFade {
+  from { transform: translateY(-8px); opacity: 0; }
+  to   { transform: translateY(0);    opacity: 1; }
+}
+.success-banner {
+  background: #e8f5e9;
+  border: 2px solid #c8e6c9;
+  color: #1b5e20;
+  padding: 12px 16px;
+  border-radius: 12px;
+  margin-bottom: 16px;
+  font-weight: 600;
+  animation: slideInFade 0.35s ease-out;  /* << slide in */
+}
+
+/* Table */
+.table-wrap {
+  overflow: auto;
+  border: 1px solid #e8f5e8;
+  border-radius: 14px;
+  margin-bottom: 18px;
+}
+.table { width: 100%; border-collapse: collapse; }
+.table th, .table td { padding: 12px 14px; border-bottom: 1px solid #eef6ef; }
+.table th { text-align: left; color: #2d5a2d; font-weight: 700; background: #f7fbf7; }
+.table td { color: #355a35; }
+
+/* Forms grid */
+.forms-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 18px;
+  margin-top: 10px;
+}
+.form-card {
+  border: 1px solid #e0f0e0;
+  border-radius: 14px;
+  padding: 16px;
+  background: #ffffff;
+}
+.form-title {
+  margin: 0 0 10px 0;
+  color: #2d5a2d;
+  font-size: 1.15rem;
+  font-weight: 700;
+}
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+.form-group { margin-bottom: 12px; }
+.label {
+  display: block;
+  color: #5a7a5a;
+  margin-bottom: 6px;
+  font-weight: 600;
+}
+.input, .select {
+  width: 100%;
+  padding: 12px 14px;
+  border: 2px solid #c8e6c8;
+  border-radius: 12px;
+  background: white;
+  color: #2d5a2d;
+  font-size: 1rem;
+  transition: border-color 0.2s ease;
+  box-sizing: border-box;
+}
+.input:focus, .select:focus {
+  outline: none;
+  border-color: #4caf50;
+  box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.1);
+}
+
+/* Other account label row */
+.other-label-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Footer actions */
+.footer-actions {
+  margin-top: 14px;
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+/* Navbar */
+.navbar {
+  height: 64px;
+  display: flex;
+  align-items: center;
+  background: white;
+  border-bottom: 1px solid #e0f0e0;
+  box-shadow: 0 6px 20px rgba(120, 179, 120, 0.08);
+}
+.nav-inner {
+  max-width: 1200px;
+  width: 100%;
+  margin: 0 auto;
+  padding: 0 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.nav-brand {
+  color: #2d5a2d;
+  font-weight: 800;
+  letter-spacing: .3px;
+  font-size: 1.1rem;
+  text-decoration: none;
+}
+.nav-links { display: flex; gap: 10px; align-items: center; }
+.nav-link {
+  padding: 8px 12px;
+  border-radius: 10px;
+  color: #2d5a2d;
+  font-weight: 700;
+  text-decoration: none;
+  border: 2px solid transparent;
+}
+.nav-link:hover { background: #f0f7f0; border-color: #c8e6c8; }
+.nav-link.active {
+  background: linear-gradient(135deg, #4caf50 0%, #45a049 100%);
+  color: white;
+  border-color: transparent;
+}
+
+/* Navbar logout button */
+.nav-button {
+  padding: 8px 12px;
+  border-radius: 10px;
+  font-weight: 700;
+  cursor: pointer;
+  border: 2px solid #c8e6c8;
+  background: #fdfdfd;
+  color: #2d5a2d;
+}
+.nav-button:hover {
+  background: #e0f0e0;
+  border-color: #a8d8a8;
+}
+.nav-button.danger {
+  border-color: #f5b5b5;
+  color: #7a1f1f;
+}
+.nav-button.danger:hover {
+  background: #ffe7e7;
+  border-color: #f19c9c;
+}
+
+/* ---------- Toast (bottom-right) ---------- */
+.toast {
+  position: fixed;
+  right: 24px;
+  bottom: 24px;
+  padding: 12px 16px;
+  border-radius: 12px;
+  background: #e8f5e9;
+  border: 2px solid #c8e6c9;
+  color: #1b5e20;
+  font-weight: 700;
+  box-shadow: 0 10px 30px rgba(120, 179, 120, 0.25);
+  transform: translateY(12px);
+  opacity: 0;
+  transition: transform 0.28s ease, opacity 0.28s ease;
+  z-index: 9999;
+  pointer-events: none; /* don't block clicks */
+}
+.toast.show {
+  transform: translateY(0);
+  opacity: 1;
+}
+.toast.hide {
+  transform: translateY(12px);
+  opacity: 0;
+}
+
+/* Responsive */
+@media (max-width: 860px) {
+  .forms-grid { grid-template-columns: 1fr; }
+  .form-row { grid-template-columns: 1fr; }
+  .nav-links { gap: 6px; flex-wrap: wrap; }
+}
