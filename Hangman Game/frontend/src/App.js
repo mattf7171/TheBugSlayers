@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
 import { socket } from './socket';
-import NameEntry from './pages/NameEntry';
-import HangmanBoard from './pages/HangmanBoard';
-import SecretChooser from './pages/SecretChooser';
+import NameEntry from './components/NameEntry';
+import HangmanBoard from './components/HangmanBoard';
+import SecretChooser from './components/SecretChooser';
 
 export default function App() {
   const [playerName, setPlayerName] = useState(null);
