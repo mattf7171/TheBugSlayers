@@ -36,7 +36,9 @@ const game = {
   masked: '',
   guesses: { correct: [], wrong: [] },
   maxWrong: 6,
-  round: 1
+  round: 1,
+  lastOutcome: null,
+  results: []
 };
 
 function computeMasked(secret, correctGuesses) {
@@ -50,6 +52,7 @@ function computeMasked(secret, correctGuesses) {
     })
     .join('');
 }
+
 
 io.on('connection', (socket) => {
   console.log('Socket connected:', socket.id);
@@ -91,16 +94,21 @@ io.on('connection', (socket) => {
     }
 
     game.secretBySetter = chosen;
+    game.secretMode = mode; // 'manual' or 'random'
     game.guesses = { correct: [], wrong: [] };
     game.masked = computeMasked(chosen, game.guesses.correct);
     game.phase = 'playing';
+    game.lastOutcome = null; 
 
     io.emit('round:state', {
       phase: game.phase,
       masked: game.masked,
       guesses: game.guesses,
-      maxWrong: game.maxWrong
+      maxWrong: game.maxWrong,
+      outcome: null
     });
+
+    io.to(socket.id).emit('round:secret', {secret: chosen });
   });
 
   // Guesser makes a guess
@@ -127,6 +135,19 @@ io.on('connection', (socket) => {
     if (won || lost) {
       // End of round: show outcome once
       game.phase = 'finished';
+
+      game.lastOutcome = won ? 'win' : 'lose';
+      const totalGuesses = game.guesses.correct.length + game.guesses.wrong.length;
+
+      game.results.push({
+        round: game.round,
+        phrase: game.secretBySetter,
+        totalGuesses,
+        mode: game.secretMode,
+        outcome: game.lastOutcome,
+        players: players.map(p => ({ name: p.name, role: p.role })),
+      });
+
       io.emit('round:state', {
         phase: game.phase,
         masked: game.masked,
@@ -143,20 +164,33 @@ io.on('connection', (socket) => {
         currentGuesser.role = 'setter';
       }
 
-      // Prepare next round
-      game.round += 1;
-      game.secretBySetter = null;
-      game.guesses = { correct: [], wrong: [] };
-      game.masked = '';
-      game.phase = 'chooseSecret';
+      setTimeout(() => {
+        // Prepare next round
+        game.round += 1;
 
-      // Broadcast updated roles so each client updates its own role
-      io.emit('roles:update', {
-        players: players.map(p => ({ name: p.name, role: p.role, id: p.id }))
-      });
+        if (game.round > 2) {
+          game.phase = 'matchOver';
+          io.emit('phase:update', {phase: 'matchOver'});
 
-      // Notify everyone of the new phase
-      io.emit('phase:update', { phase: 'chooseSecret' });
+          io.emit('match:results', {
+            results: game.results
+          });
+          return;
+        }
+
+        game.secretBySetter = null;
+        game.guesses = { correct: [], wrong: [] };
+        game.masked = '';
+        game.phase = 'chooseSecret';
+
+        // Broadcast updated roles so each client updates its own role
+        io.emit('roles:update', {
+          players: players.map(p => ({ name: p.name, role: p.role, id: p.id }))
+        });
+
+        // Notify everyone of the new phase
+        io.emit('phase:update', { phase: 'chooseSecret' });
+      }, 4000)
 
       // IMPORTANT: do not emit another round:state here
       return;

@@ -3,6 +3,7 @@ import { socket } from './socket';
 import NameEntry from './components/NameEntry';
 import HangmanBoard from './components/HangmanBoard';
 import SecretChooser from './components/SecretChooser';
+import Leaderboards from './components/Leaderboards';
 
 export default function App() {
   const [playerName, setPlayerName] = useState(null);
@@ -14,6 +15,9 @@ export default function App() {
   const [maxWrong, setMaxWrong] = useState(6);
   const [outcome, setOutcome] = useState(null);
   const [playersWithRoles, setPlayersWithRoles] = useState([]);
+  const [secretWord, setSecretWord] = useState(null);
+  const [countdown, setCountdown] = useState(null);
+  const [matchResults, setMatchResults] = useState(null);
 
   useEffect(() => {
     socket.on('players:update', (names) => {
@@ -27,6 +31,9 @@ export default function App() {
     socket.on('phase:update', ({ phase }) => {
       console.log('Phase update:', phase);
       setPhase(phase);
+      if (phase === 'chooseSecret') {
+        setSecretWord(null); // clear the old word
+      }
     });
     socket.on('round:state', (s) => {
       console.log('Round state:', s);
@@ -35,6 +42,21 @@ export default function App() {
       setGuesses(s.guesses);
       setMaxWrong(s.maxWrong);
       setOutcome(s.outcome || null);
+
+      if (s.phase === 'finished') {
+        // Start a countdown (currently set to 4 seconds)
+        let timeLeft = 4;
+        setCountdown(timeLeft);
+
+        const interval = setInterval(() => {
+          timeLeft -= 1;
+          setCountdown(timeLeft);
+          if (timeLeft <= 0) {
+            clearInterval(interval);
+            setCountdown(null); // clear when done
+          }
+        }, 1000);
+      }
     });
     socket.on('roles:update', (payload) => {
       setPlayersWithRoles(payload.players);
@@ -44,12 +66,20 @@ export default function App() {
         setRole(me.role);
       }
     });
+    socket.on('round:secret', ({ secret }) => {
+      setSecretWord(secret);
+    })
+    socket.on('match:results', (payload) => {
+      setMatchResults(payload.results);
+    });
     return () => {
       socket.off('players:update');
       socket.off('role');
       socket.off('phase:update');
       socket.off('round:state');
       socket.off('roles:update');
+      socket.off('round:secret');
+      socket.off('match:results');
     };
   }, []);
 
@@ -80,8 +110,14 @@ export default function App() {
         guesses={guesses}
         maxWrong={maxWrong}
         outcome={outcome}
+        secretWord={secretWord}
+        countdown={countdown}
       />
     );
+  }
+
+  if (phase === 'matchOver') {
+    return <Leaderboards results={matchResults} />;
   }
 
   return <div>Waiting for game state...</div>;
