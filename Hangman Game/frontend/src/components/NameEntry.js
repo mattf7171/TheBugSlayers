@@ -5,21 +5,48 @@ export default function NameEntry({ onRegistered }) {
   const [name, setName] = useState('');
 
   useEffect(() => {
-    socket.on('player:registered', (data) => {
+    const handler = (data) => {
       onRegistered(data.name);
-    });
-    return () => socket.off('player:registered');
+    };
+    socket.on('player:registered', handler);
+    return () => socket.off('player:registered', handler);
   }, [onRegistered]);
 
   const register = () => {
-    socket.emit('player:register', { name });
+    const trimmed = name.trim();
+    if (!trimmed) return;
+    socket.emit('player:register', { name: trimmed });
   };
 
   return (
-    <div>
-      <h2>Enter your name</h2>
-      <input value={name} onChange={e => setName(e.target.value)} />
-      <button onClick={register}>Submit</button>
+    <div className="screen">
+      <div className="card">
+        <h1 className="card-title">BugSlayers Hangman</h1>
+        <p className="card-subtitle">
+          Start by entering your player name to join this 2-player session.
+        </p>
+
+        <div className="field-group">
+          <label className="field-label">Player name</label>
+          <input
+            className="text-input"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            placeholder="e.g., Matt, SlayerOne…"
+          />
+          <span className="helper-text">
+            This name will appear in the session info and match results.
+          </span>
+        </div>
+
+        <button
+          className="btn-primary"
+          onClick={register}
+          disabled={!name.trim()}
+        >
+          Join Game
+        </button>
+      </div>
     </div>
   );
 }
