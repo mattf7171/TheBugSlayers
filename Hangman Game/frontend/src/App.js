@@ -4,6 +4,7 @@ import NameEntry from './components/NameEntry';
 import HangmanBoard from './components/HangmanBoard';
 import SecretChooser from './components/SecretChooser';
 import Leaderboards from './components/Leaderboards';
+import './App.css';
 
 export default function App() {
   const [playerName, setPlayerName] = useState(null);

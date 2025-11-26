@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { socket } from '../socket';
+import './NameEntry.css';
 
 export default function NameEntry({ onRegistered }) {
   const [name, setName] = useState('');

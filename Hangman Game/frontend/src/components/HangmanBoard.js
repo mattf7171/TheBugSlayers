@@ -1,4 +1,5 @@
 import { socket } from '../socket';
+import './HangmanBoard.css';
 
 export default function HangmanBoard({ role, masked, guesses, maxWrong, outcome, secretWord, countdown }) {
   const letters = 'abcdefghijklmnopqrstuvwxyz'.split('');
@@ -8,25 +9,36 @@ export default function HangmanBoard({ role, masked, guesses, maxWrong, outcome,
     socket.emit('round:guess', { letter: l });
   };
 
+  const getKeyClass = (letter) => {
+    let className = 'keyboard-key';
+    if (guesses.correct.includes(letter)) className += ' correct';
+    if (guesses.wrong.includes(letter)) className += ' wrong';
+    return className;
+  };
+
   return (
-    <div>
+    <div className="hangman-board">
       <h2>{masked}</h2>
-      <p>Wrong: {guesses.wrong.join(', ')} ({guesses.wrong.length}/{maxWrong})</p>
-      <p>Correct: {guesses.correct.join(', ')}</p>
+      
+      <div className="status-section">
+        <p className="wrong-guesses">Wrong: {guesses.wrong.join(', ')} ({guesses.wrong.length}/{maxWrong})</p>
+        <p className="correct-guesses">Correct: {guesses.correct.join(', ')}</p>
+      </div>
 
       {outcome ? (
-        <div>
+        <div className="outcome-message">
           <p>{outcome === 'win' ? 'Guesser won!' : 'Guesser lost!'}</p>
           {countdown !== null && (
-            <p>Next round starting in {countdown}...</p>
+            <p className="countdown">Next round starting in {countdown}...</p>
           )}
         </div>
         
       ) : role === 'guesser' ? (
-        <div>
+        <div className="keyboard-container">
           {letters.map((l) => (
             <button
               key={l}
+              className={getKeyClass(l)}
               onClick={() => onGuess(l)}
               disabled={guesses.correct.includes(l) || guesses.wrong.includes(l)}
             >
@@ -35,10 +47,10 @@ export default function HangmanBoard({ role, masked, guesses, maxWrong, outcome,
           ))}
         </div>
       ) : (
-        <div>
-          <p><strong>Secret word: </strong> {secretWord}</p>
+        <div className="secret-word-display">
+          <p><strong>Secret word: </strong> <span className="secret-word">{secretWord}</span></p>
           <p>Waiting for guesses…</p>
-          </div>
+        </div>
       )}
     </div>
   );
