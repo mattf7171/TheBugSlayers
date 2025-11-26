@@ -1,38 +1,331 @@
+:root {
+  --green-dark: #2d5a2d;
+  --green-main: #4caf50;
+  --green-bright: #45a049;
+  --bg-soft: #f5faf5;
+  --text-main: #12301a;
+  --card-radius: 18px;
+  --shadow-soft: 0 18px 40px rgba(0, 0, 0, 0.06);
+}
+
 .App {
-  text-align: center;
-}
-
-.App-logo {
-  height: 40vmin;
-  pointer-events: none;
-}
-
-@media (prefers-reduced-motion: no-preference) {
-  .App-logo {
-    animation: App-logo-spin infinite 20s linear;
-  }
-}
-
-.App-header {
-  background-color: #282c34;
   min-height: 100vh;
+  background: var(--bg-soft);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+  box-sizing: border-box;
+  color: var(--text-main);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen,
+    Ubuntu, Cantarell, "Fira Sans", "Droid Sans", "Helvetica Neue", sans-serif;
+}
+
+/* Main app shell (wraps everything inside App) */
+.app-shell {
+  width: 100%;
+  max-width: 1100px;
+  margin: 0 auto;
+}
+
+/* For the very first screen when entering your name */
+.fullscreen-center {
+  min-height: calc(100vh - 4rem);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Header at the top of the main app */
+.app-header {
+  margin-bottom: 1.5rem;
+}
+
+.app-title {
+  margin: 0;
+  font-size: 1.8rem;
+  font-weight: 800;
+  color: var(--green-dark);
+}
+
+.app-subtitle {
+  margin: 0.35rem 0 0;
+  font-size: 0.95rem;
+  color: #5b6a5f;
+}
+
+/* Generic full-screen centering shell (not heavily used now) */
+.screen {
+  width: 100%;
+  max-width: 960px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Reusable card */
+.card {
+  background: #ffffff;
+  border-radius: var(--card-radius);
+  box-shadow: var(--shadow-soft);
+  padding: 1.75rem 2rem;
+  width: 100%;
+  max-width: 100%;
+}
+
+/* Card header row (title + chips, etc.) */
+.card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 0.75rem;
+}
+
+/* Header text inside cards */
+.card-title {
+  margin: 0;
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: var(--green-dark);
+}
+
+.card-subtitle {
+  margin: 0 0 1.5rem 0;
+  font-size: 0.9rem;
+  color: #5b6a5f;
+}
+
+.card-section-title {
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+/* Form layout */
+.field-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  margin-bottom: 1rem;
+}
+
+.field-label {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #425047;
+}
+
+.text-input {
+  border-radius: 999px;
+  border: 1px solid #cfd9ce;
+  padding: 0.55rem 0.9rem;
+  font-size: 0.95rem;
+  outline: none;
+}
+
+.text-input:focus {
+  border-color: var(--green-main);
+  box-shadow: 0 0 0 2px rgba(76, 175, 80, 0.18);
+}
+
+/* Primary green button */
+.btn-primary {
+  border: none;
+  border-radius: 999px;
+  padding: 0.55rem 1.4rem;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  background: var(--green-main);
+  color: #ffffff;
+  transition: background 0.15s ease, transform 0.05s ease;
+}
+
+.btn-primary:hover:not(:disabled) {
+  background: var(--green-bright);
+  transform: translateY(-1px);
+}
+
+.btn-primary:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+/* Small pill in top-right corners, if you want to reuse */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.15rem 0.6rem;
+  border-radius: 999px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  background: rgba(76, 175, 80, 0.1);
+  color: var(--green-dark);
+}
+
+/* Helper text / secondary lines */
+.helper-text {
+  font-size: 0.8rem;
+  color: #68766c;
+}
+
+/* --- Status chip used in waiting room and header --- */
+.status-chip {
+  font-size: 0.75rem;
+  padding: 0.2rem 0.7rem;
+  border-radius: 999px;
+  border: 1px solid rgba(76, 175, 80, 0.35);
+  background: rgba(76, 175, 80, 0.08);
+  color: var(--green-dark);
+  font-weight: 600;
+}
+
+/* Layout for main game + sidebar */
+.app-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 2.1fr) minmax(0, 1.4fr);
+  gap: 1.5rem;
+}
+
+/* Session info list in sidebar */
+.session-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  font-size: 0.9rem;
+}
+
+.session-label {
+  font-weight: 600;
+  color: #3f4d44;
+}
+
+.session-muted {
+  font-size: 0.8rem;
+  color: #6a756e;
+}
+
+/* High scores / leaderboards wrapper */
+.leaderboard-wrapper {
+  margin-top: 1.25rem;
+}
+
+.leaderboard-title-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 0.5rem;
+}
+
+/* Hangman board + keyboard layout */
+.board-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.2fr) minmax(0, 1.5fr);
+  gap: 1.25rem;
+}
+
+.hangman-figure-wrapper {
   display: flex;
   flex-direction: column;
   align-items: center;
+  gap: 0.6rem;
+}
+
+.masked-word {
+  letter-spacing: 0.3em;
+  font-size: 1.2rem;
+  font-weight: 600;
+  text-align: center;
+  padding: 0.4rem 0.8rem;
+  border-radius: 999px;
+  background: rgba(76, 175, 80, 0.08);
+  color: var(--green-dark);
+}
+
+.guess-summary {
+  font-size: 0.85rem;
+  color: #4b5a50;
+}
+
+/* On-screen keyboard */
+.keyboard-grid {
+  display: grid;
+  grid-template-columns: repeat(13, minmax(0, 1fr));
+  gap: 0.35rem;
+  margin-top: 0.75rem;
+}
+
+.keyboard-grid button {
+  padding: 0.35rem 0;
+  font-size: 0.8rem;
+  border-radius: 999px;
+}
+
+/* Win / lose text */
+.outcome-text {
+  font-size: 0.95rem;
+  font-weight: 600;
+  margin-bottom: 0.25rem;
+}
+
+.outcome-text.win {
+  color: #1b7f3c;
+}
+
+.outcome-text.lose {
+  color: #b91c1c;
+}
+
+/* Table wrapper (for scrollable high scores) */
+.table-wrapper {
+  border-radius: 12px;
+  border: 1px solid #dde5da;
+  overflow: hidden;
+  background: #ffffff;
+}
+
+.table {
+  width: 100%;
+}
+
+/* Small indicator chips for mode + success/fail */
+.mode-pill {
+  display: inline-flex;
+  align-items: center;
   justify-content: center;
-  font-size: calc(10px + 2vmin);
-  color: white;
+  font-size: 0.75rem;
+  padding: 0.1rem 0.6rem;
+  border-radius: 999px;
+  background: rgba(76, 175, 80, 0.09);
+  color: var(--green-dark);
 }
 
-.App-link {
-  color: #61dafb;
+.badge-success {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.75rem;
+  padding: 0.1rem 0.6rem;
+  border-radius: 999px;
+  background: rgba(34, 197, 94, 0.12);
+  color: #15803d;
 }
 
-@keyframes App-logo-spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
+.badge-fail {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.75rem;
+  padding: 0.1rem 0.6rem;
+  border-radius: 999px;
+  background: rgba(248, 113, 113, 0.12);
+  color: #b91c1c;
+}
+
+/* Older helper (kept in case) */
+.hangman-layout {
+  width: 100%;
+  max-width: 1100px;
 }

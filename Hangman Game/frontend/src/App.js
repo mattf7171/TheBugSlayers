@@ -1,9 +1,12 @@
+// frontend/src/App.js
 import { useState, useEffect } from 'react';
 import { socket } from './socket';
 import NameEntry from './components/NameEntry';
 import HangmanBoard from './components/HangmanBoard';
 import SecretChooser from './components/SecretChooser';
 import Leaderboards from './components/Leaderboards';
+import HighScores from './components/HighScores';
+import './App.css';
 
 export default function App() {
   const [playerName, setPlayerName] = useState(null);
@@ -14,29 +17,25 @@ export default function App() {
   const [guesses, setGuesses] = useState({ correct: [], wrong: [] });
   const [maxWrong, setMaxWrong] = useState(6);
   const [outcome, setOutcome] = useState(null);
-  const [playersWithRoles, setPlayersWithRoles] = useState([]);
   const [secretWord, setSecretWord] = useState(null);
   const [countdown, setCountdown] = useState(null);
   const [matchResults, setMatchResults] = useState(null);
+  const [round, setRound] = useState(0)
 
   useEffect(() => {
     socket.on('players:update', (names) => {
-      console.log('Players update:', names);
       setPlayers(names);
     });
     socket.on('role', (data) => {
-      console.log('Role assigned:', data.role);
       setRole(data.role);
     });
     socket.on('phase:update', ({ phase }) => {
-      console.log('Phase update:', phase);
       setPhase(phase);
       if (phase === 'chooseSecret') {
-        setSecretWord(null); // clear the old word
+        setSecretWord(null);
       }
     });
     socket.on('round:state', (s) => {
-      console.log('Round state:', s);
       setPhase(s.phase);
       setMasked(s.masked);
       setGuesses(s.guesses);
@@ -44,34 +43,31 @@ export default function App() {
       setOutcome(s.outcome || null);
 
       if (s.phase === 'finished') {
-        // Start a countdown (currently set to 4 seconds)
         let timeLeft = 4;
         setCountdown(timeLeft);
-
         const interval = setInterval(() => {
           timeLeft -= 1;
           setCountdown(timeLeft);
           if (timeLeft <= 0) {
             clearInterval(interval);
-            setCountdown(null); // clear when done
+            setCountdown(null);
           }
         }, 1000);
+        // move round state up one
+        setRound((prev) => prev + 1);
       }
     });
     socket.on('roles:update', (payload) => {
-      setPlayersWithRoles(payload.players);
-      // Find myself in the updated list and set my role
-      const me = payload.players.find(p => p.id === socket.id);
-      if (me) {
-        setRole(me.role);
-      }
+      const me = payload.players.find((p) => p.id === socket.id);
+      if (me) setRole(me.role);
     });
     socket.on('round:secret', ({ secret }) => {
       setSecretWord(secret);
-    })
+    });
     socket.on('match:results', (payload) => {
       setMatchResults(payload.results);
     });
+
     return () => {
       socket.off('players:update');
       socket.off('role');
@@ -83,42 +79,172 @@ export default function App() {
     };
   }, []);
 
+  // --- name entry screen ---
   if (!playerName) {
-    return <NameEntry onRegistered={setPlayerName} />;
-  }
-
-  // Phase handling
-  if (phase === 'waiting') {
     return (
-      <div>
-        <h2>Waiting for another player...</h2>
-        <p>Players connected: {players.join(', ')}</p>
+      <div className="App">
+        <div className="app-shell fullscreen-center">
+          <div className="card">
+            <div className="card-header">
+              <div>
+                <h1 className="app-title">BugSlayers Hangman</h1>
+                <p className="app-subtitle">
+                  Start by entering your player name to join the 2-player session.
+                </p>
+              </div>
+            </div>
+            {/* NameEntry now just renders the form, no extra card/screen */}
+            <NameEntry onRegistered={setPlayerName} />
+          </div>
+        </div>
       </div>
     );
   }
 
-  if (phase === 'chooseSecret') {
-    if (role === 'setter') return <SecretChooser />;
-    return <div>Waiting for setter to choose a new word...</div>;
-  }
+  // --- main game shell ---
+  return (
+    <div className="App">
+      <div className="app-shell">
+        <header className="app-header">
+          <h1 className="app-title">BugSlayers Hangman</h1>
+          <p className="app-subtitle">
+            Take turns choosing phrases and guessing them in real time. Session mode:
+            2-Player.
+          </p>
+        </header>
 
-  if (phase === 'playing' || phase === 'finished') {
-    return (
-      <HangmanBoard
-        role={role}
-        masked={masked}
-        guesses={guesses}
-        maxWrong={maxWrong}
-        outcome={outcome}
-        secretWord={secretWord}
-        countdown={countdown}
-      />
-    );
-  }
+        {/* Waiting for the 2nd player */}
+        {phase === 'waiting' && (
+          <div className="card">
+            <div className="card-header">
+              <span className="card-title">Waiting Room</span>
+              <span className="status-chip">Connected: {players.length}/2</span>
+            </div>
+            <p>Your name: <strong>{playerName}</strong></p>
+            <p className="session-muted">
+              Share the game URL with your partner and have them join from another browser or
+              incognito window.
+            </p>
+            <p style={{ marginTop: '0.5rem' }}>
+              Players connected: {players.join(', ') || 'Just you so far'}
+            </p>
+          </div>
+        )}
 
-  if (phase === 'matchOver') {
-    return <Leaderboards results={matchResults} />;
-  }
+        {/* Secret choosing */}
+        {phase === 'chooseSecret' && (
+          <div className="card">
+            <div className="card-header">
+              <span className="card-title">Secret Phrase</span>
+              <span className="status-chip">
+                You are the {role === 'setter' ? 'Setter' : 'Guesser'}
+              </span>
+            </div>
+            {role === 'setter' ? (
+              <>
+                <p className="session-muted">
+                  Enter a custom phrase, or let the system draw a random one from the database.
+                  Your partner will only see blanks.
+                </p>
+                {/* SecretChooser now just renders the inner controls */}
+                <SecretChooser />
+              </>
+            ) : (
+              <p>
+                Waiting for the <strong>setter</strong> to choose a new word or phrase…
+              </p>
+            )}
+          </div>
+        )}
 
-  return <div>Waiting for game state...</div>;
+        {/* Gameplay + sidebar */}
+        {(phase === 'playing' || phase === 'finished') && (
+          <div className="app-grid">
+            <div className="card">
+              <div className="card-header">
+                <span className="card-title">Hangman Board</span>
+                <span className="status-chip">
+                  Role: {role === 'setter' ? 'Setter' : 'Guesser'}
+                </span>
+              </div>
+              <HangmanBoard
+                role={role}
+                masked={masked}
+                guesses={guesses}
+                maxWrong={maxWrong}
+                outcome={outcome}
+                secretWord={secretWord}
+                countdown={countdown}
+                round={round}
+              />
+            </div>
+
+            <div className="card">
+              <div className="card-header">
+                <span className="card-title">Session Info</span>
+              </div>
+              <div className="session-list">
+                <p>
+                  <span className="session-label">You:</span> {playerName}
+                </p>
+                <p>
+                  <span className="session-label">Players connected:</span>{' '}
+                  {players.length ? players.join(', ') : 'Unknown'}
+                </p>
+                <p>
+                  <span className="session-label">Guesses (wrong):</span>{' '}
+                  {guesses.wrong.length}/{maxWrong}
+                </p>
+                <p>
+                  <span className="session-label">Correct letters:</span>{' '}
+                  {guesses.correct.join(', ') || '—'}
+                </p>
+                <p>
+                  <span className="session-label">Wrong letters:</span>{' '}
+                  {guesses.wrong.join(', ') || '—'}
+                </p>
+
+                {outcome && (
+                  <p style={{ marginTop: '0.4rem' }}>
+                    <span className="session-label">Round result:</span>{' '}
+                    {outcome === 'win' ? 'Guesser succeeded' : 'Guesser failed'}
+                  </p>
+                )}
+
+                {countdown !== null && (
+                  <p className="session-muted" style={{ marginTop: '0.25rem' }}>
+                    Next round starting in {countdown}…
+                  </p>
+                )}
+
+                <div className="leaderboard-wrapper">
+                  <div className="leaderboard-title-row">
+                    <span className="card-section-title">High Scores</span>
+                    <span className="badge">Previous game results</span>
+                  </div>
+                  {/* Use the high scores fed from /api/results */}
+                  <HighScores />
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Match over: show all prior results */}
+        {phase === 'matchOver' && (
+          <div className="card">
+            <div className="card-header">
+              <span className="card-title">Match Results</span>
+              <span className="badge">Game complete</span>
+            </div>
+            <p className="session-muted">
+              Below are the most recent games played (including this session).
+            </p>
+            {/* Reuse the same high scores table for the final screen */}
+            <HighScores />
+          </div>
+        )}
+      </div>
+    </div>
+  );
 }
