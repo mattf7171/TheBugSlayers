@@ -20,6 +20,7 @@ export default function App() {
   const [secretWord, setSecretWord] = useState(null);
   const [countdown, setCountdown] = useState(null);
   const [matchResults, setMatchResults] = useState(null);
+  const [round, setRound] = useState(0)
 
   useEffect(() => {
     socket.on('players:update', (names) => {
@@ -52,6 +53,8 @@ export default function App() {
             setCountdown(null);
           }
         }, 1000);
+        // move round state up one
+        setRound((prev) => prev + 1);
       }
     });
     socket.on('roles:update', (payload) => {
@@ -172,6 +175,7 @@ export default function App() {
                 outcome={outcome}
                 secretWord={secretWord}
                 countdown={countdown}
+                round={round}
               />
             </div>
 

@@ -61,6 +61,7 @@ export default function HangmanBoard({
   outcome,
   secretWord,
   countdown,
+  round,
 }) {
   const letters = 'abcdefghijklmnopqrstuvwxyz'.split('');
 
@@ -91,7 +92,10 @@ export default function HangmanBoard({
             </p>
             {countdown !== null && (
               <p className="session-muted">
-                Next round starting in {countdown}…
+                {round === 1
+                  ? `Next round starting in ${countdown}...`
+                  : `Game ends in ${countdown}...`
+                }
               </p>
             )}
           </>
