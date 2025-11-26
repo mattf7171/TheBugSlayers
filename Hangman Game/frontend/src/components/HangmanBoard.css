@@ -1,0 +1,232 @@
+.hangman-board {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 30px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  min-height: 100vh;
+  color: white;
+  font-family: 'Arial', sans-serif;
+  border-radius: 15px;
+}
+
+.hangman-board h2 {
+  text-align: center;
+  font-size: 3em;
+  margin-bottom: 30px;
+  text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+  color: white;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  font-weight: bold;
+  background: rgba(255, 255, 255, 0.1);
+  padding: 20px;
+  border-radius: 15px;
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+/* Status sections */
+.status-section {
+  background: rgba(255, 255, 255, 0.1);
+  padding: 20px;
+  border-radius: 15px;
+  margin-bottom: 25px;
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.status-section p {
+  margin: 10px 0;
+  font-size: 1.2em;
+  text-shadow: 1px 1px 2px rgba(0,0,0,0.3);
+}
+
+.wrong-guesses {
+  color: #ff6b6b;
+  font-weight: bold;
+}
+
+.correct-guesses {
+  color: #4CAF50;
+  font-weight: bold;
+}
+
+/* Keyboard layout */
+.keyboard-container {
+  display: grid;
+  grid-template-columns: repeat(10, 1fr);
+  gap: 10px;
+  margin: 30px 0;
+  padding: 25px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 20px;
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+}
+
+/* Individual keys */
+.keyboard-key {
+  background: rgba(255, 255, 255, 0.2);
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-radius: 12px;
+  color: white;
+  font-weight: bold;
+  font-size: 1.3em;
+  padding: 18px 12px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  text-transform: uppercase;
+  backdrop-filter: blur(5px);
+  text-shadow: 1px 1px 2px rgba(0,0,0,0.3);
+  box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+}
+
+.keyboard-key:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.3);
+  transform: translateY(-3px);
+  box-shadow: 0 6px 20px rgba(0,0,0,0.2);
+  border-color: rgba(255, 255, 255, 0.5);
+}
+
+.keyboard-key:active:not(:disabled) {
+  transform: translateY(1px);
+  box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+}
+
+.keyboard-key:disabled {
+  background: rgba(255, 255, 255, 0.05);
+  color: rgba(255, 255, 255, 0.4);
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+/* Correct guesses */
+.keyboard-key.correct {
+  background: rgba(76, 175, 80, 0.3);
+  border-color: rgba(76, 175, 80, 0.6);
+  color: #4CAF50;
+}
+
+/* Wrong guesses */
+.keyboard-key.wrong {
+  background: rgba(244, 67, 54, 0.3);
+  border-color: rgba(244, 67, 54, 0.6);
+  color: #f44336;
+}
+
+/* Outcome messages */
+.outcome-message {
+  text-align: center;
+  margin: 30px 0;
+  padding: 30px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 20px;
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.outcome-message p {
+  font-size: 1.5em;
+  font-weight: bold;
+  margin: 15px 0;
+  text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+}
+
+.outcome-message p:first-child {
+  font-size: 2em;
+  color: #4CAF50;
+}
+
+/* Secret word display */
+.secret-word-display {
+  background: rgba(255, 255, 255, 0.15);
+  padding: 25px;
+  border-radius: 15px;
+  margin: 20px 0;
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.secret-word-display p {
+  margin: 10px 0;
+  font-size: 1.2em;
+}
+
+.secret-word {
+  color: #4CAF50;
+  font-weight: bold;
+  font-size: 1.4em;
+  text-shadow: 1px 1px 2px rgba(0,0,0,0.3);
+}
+
+/* Countdown timer */
+.countdown {
+  color: #FFD700;
+  font-weight: bold;
+  font-size: 1.4em;
+  animation: pulse 1.5s infinite;
+  text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+}
+
+@keyframes pulse {
+  0% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.7; transform: scale(1.05); }
+  100% { opacity: 1; transform: scale(1); }
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .hangman-board {
+    padding: 20px;
+  }
+  
+  .hangman-board h2 {
+    font-size: 2.2em;
+    letter-spacing: 0.2em;
+    padding: 15px;
+  }
+  
+  .keyboard-container {
+    grid-template-columns: repeat(7, 1fr);
+    gap: 8px;
+    padding: 20px;
+  }
+  
+  .keyboard-key {
+    padding: 15px 10px;
+    font-size: 1.1em;
+  }
+  
+  .status-section {
+    padding: 15px;
+  }
+}
+
+@media (max-width: 480px) {
+  .hangman-board h2 {
+    font-size: 1.8em;
+    letter-spacing: 0.1em;
+  }
+  
+  .keyboard-container {
+    grid-template-columns: repeat(5, 1fr);
+    gap: 6px;
+    padding: 15px;
+  }
+  
+  .keyboard-key {
+    padding: 12px 8px;
+    font-size: 1em;
+  }
+  
+  .outcome-message p:first-child {
+    font-size: 1.6em;
+  }
+  
+  .outcome-message p {
+    font-size: 1.2em;
+  }
+}
