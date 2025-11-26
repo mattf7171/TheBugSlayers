@@ -1,9 +1,11 @@
+// frontend/src/App.js
 import { useState, useEffect } from 'react';
 import { socket } from './socket';
 import NameEntry from './components/NameEntry';
 import HangmanBoard from './components/HangmanBoard';
 import SecretChooser from './components/SecretChooser';
 import Leaderboards from './components/Leaderboards';
+import HighScores from './components/HighScores';
 import './App.css';
 
 export default function App() {
@@ -88,6 +90,7 @@ export default function App() {
                 </p>
               </div>
             </div>
+            {/* NameEntry now just renders the form, no extra card/screen */}
             <NameEntry onRegistered={setPlayerName} />
           </div>
         </div>
@@ -140,6 +143,7 @@ export default function App() {
                   Enter a custom phrase, or let the system draw a random one from the database.
                   Your partner will only see blanks.
                 </p>
+                {/* SecretChooser now just renders the inner controls */}
                 <SecretChooser />
               </>
             ) : (
@@ -212,20 +216,17 @@ export default function App() {
                 <div className="leaderboard-wrapper">
                   <div className="leaderboard-title-row">
                     <span className="card-section-title">High Scores</span>
-                    <span className="badge">Previous match results</span>
+                    <span className="badge">Previous game results</span>
                   </div>
-                  {matchResults && matchResults.length > 0 ? (
-                    <Leaderboards results={matchResults} />
-                  ) : (
-                    <p className="session-muted">Play through a full match to see results.</p>
-                  )}
+                  {/* Use the high scores fed from /api/results */}
+                  <HighScores />
                 </div>
               </div>
             </div>
           </div>
         )}
 
-        {/* Match over */}
+        {/* Match over: show all prior results */}
         {phase === 'matchOver' && (
           <div className="card">
             <div className="card-header">
@@ -233,9 +234,10 @@ export default function App() {
               <span className="badge">Game complete</span>
             </div>
             <p className="session-muted">
-              Below are the most recent rounds played in this session (and prior sessions).
+              Below are the most recent games played (including this session).
             </p>
-            <Leaderboards results={matchResults} />
+            {/* Reuse the same high scores table for the final screen */}
+            <HighScores />
           </div>
         )}
       </div>

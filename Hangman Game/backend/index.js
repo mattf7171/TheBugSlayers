@@ -63,6 +63,32 @@ function computeMasked(secret, correctGuesses) {
     .join('');
 }
 
+// --- auto-seed phrases if collection is empty ---
+async function ensureSeedPhrases() {
+  try {
+    const db = await connectDB();
+    const collection = db.collection('phrases');
+    const count = await collection.countDocuments();
+
+    if (count === 0) {
+      const phrases = [
+        { text: 'javascript' },
+        { text: 'operating systems' },
+        { text: 'computer science' },
+        { text: 'banana tea' },
+        { text: 'natural grocers' },
+      ];
+
+      await collection.insertMany(phrases);
+      console.log('Seeded phrases collection with', phrases.length, 'documents');
+    } else {
+      console.log(`Phrases collection already has ${count} documents; skipping seed.`);
+    }
+  } catch (err) {
+    console.error('Error ensuring seed phrases:', err);
+  }
+}
+
 // --- socket handlers ---
 io.on('connection', (socket) => {
   console.log('Socket connected:', socket.id);
@@ -107,27 +133,24 @@ io.on('connection', (socket) => {
     if (!me || me.role !== 'setter') return;
 
     let chosen = '';
+
     try {
       if (mode === 'manual') {
         chosen = (secret || '').trim();
       } else if (mode === 'random') {
         const db = await connectDB();
+        const collection = db.collection('phrases');
 
-        // Try to sample a random document
-        const wordDoc = await db
-          .collection('phrases')
-          .aggregate([{ $sample: { size: 1 } }])
-          .next();
+        const count = await collection.countDocuments();
+        if (count > 0) {
+          const rand = Math.floor(Math.random() * count);
+          const wordDoc = await collection.find().skip(rand).limit(1).next();
 
-        // Accept either { text: 'word' } or { phrase: 'word' }
-        chosen = (wordDoc?.text || wordDoc?.phrase || '').trim();
-
-        if (!chosen) {
-          console.warn(
-            'Random phrase: no documents or missing text/phrase field; using fallback'
-          );
-        } else {
+          // Accept either { text: 'word' } or { phrase: 'word' }
+          chosen = (wordDoc?.text || wordDoc?.phrase || '').trim();
           console.log('Random phrase chosen:', chosen);
+        } else {
+          console.warn('Random phrase: phrases collection is empty');
         }
       }
     } catch (err) {
@@ -297,20 +320,42 @@ io.on('connection', (socket) => {
 });
 
 // REST endpoint for high scores (all prior results)
+// Shape it for the HighScores component:
+// { playerName, phrase, totalGuesses, mode, success }
 app.get('/api/results', async (req, res) => {
   try {
     const db = await connectDB();
-    const results = await db
+    const raw = await db
       .collection('results')
       .find()
       .sort({ createdAt: -1 })
       .limit(50)
       .toArray();
-    res.json(results);
+
+    const transformed = raw.map((r) => {
+      const guesser =
+        (r.players || []).find((p) => p.role === 'guesser') || {};
+      return {
+        playerName: guesser.name || 'Unknown',
+        phrase: r.phrase,
+        totalGuesses: r.totalGuesses,
+        mode: r.mode,
+        success: r.outcome === 'win',
+        createdAt: r.createdAt,
+      };
+    });
+
+    res.json(transformed);
   } catch (err) {
     console.error('Error fetching results:', err);
     res.status(500).json({ error: 'Failed to load results' });
   }
 });
 
-server.listen(4000, () => console.log('Backend running on http://localhost:4000'));
+// --- start server after seeding phrases (if needed) ---
+(async () => {
+  await ensureSeedPhrases();
+  server.listen(4000, () =>
+    console.log('Backend running on http://localhost:4000')
+  );
+})();

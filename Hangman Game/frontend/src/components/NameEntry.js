@@ -1,3 +1,4 @@
+// frontend/src/components/NameEntry.js
 import { useState, useEffect } from 'react';
 import { socket } from '../socket';
 
@@ -19,34 +20,27 @@ export default function NameEntry({ onRegistered }) {
   };
 
   return (
-    <div className="screen">
-      <div className="card">
-        <h1 className="card-title">BugSlayers Hangman</h1>
-        <p className="card-subtitle">
-          Start by entering your player name to join this 2-player session.
-        </p>
-
-        <div className="field-group">
-          <label className="field-label">Player name</label>
-          <input
-            className="text-input"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            placeholder="e.g., Matt, SlayerOne…"
-          />
-          <span className="helper-text">
-            This name will appear in the session info and match results.
-          </span>
-        </div>
-
-        <button
-          className="btn-primary"
-          onClick={register}
-          disabled={!name.trim()}
-        >
-          Join Game
-        </button>
+    <>
+      <div className="field-group">
+        <label className="field-label">Player name</label>
+        <input
+          className="text-input"
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          placeholder="e.g., Matt, SlayerOne…"
+        />
+        <span className="helper-text">
+          This name will appear in the session info and match results.
+        </span>
       </div>
-    </div>
+
+      <button
+        className="btn-primary"
+        onClick={register}
+        disabled={!name.trim()}
+      >
+        Join Game
+      </button>
+    </>
   );
 }
