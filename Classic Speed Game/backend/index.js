@@ -90,7 +90,7 @@ io.on('connection', (socket) => {
         socket.emit('player:registered', { name: trimmed });
         io.emit(
             'players:update',
-            players.map((p) => p.name)
+            players
         );
     }); // end player register
 
@@ -113,7 +113,7 @@ io.on('connection', (socket) => {
     // Player attempts to play a card
     socket.on('card:play', ({ card, pile }) => {
         // card play logic
-        handleCardPlay(socket.id, card, pile);
+        handleCardPlay(socket, socket.id, card, pile);
     });
 
     // Player draws from deck
@@ -124,23 +124,15 @@ io.on('connection', (socket) => {
 
     // Flip the side piles if voted
     socket.on('pile:flipRequest', () => {
-        // Allow flipping only if no moves exist
-        if (!noMovesAvailable()) {
-            // Optional: tell the player they cannot flip yet
-            socket.emit('pile:flipDenied', { reason: "Moves still available" });
-            return;
-        }
-
-        // Record vote
+        // Record Vote
         game.flipVotes[socket.id] = true;
 
-        // Broadcast vote status
+        // Broadcast vote status to UI
         io.emit('pile:flipStatus', game.flipVotes);
 
-        // Check for both players' votes
         const allVoted = Object.values(game.flipVotes).every(v => v === true);
 
-        if (allVoted) {
+        if (allVoted && noMovesAvailable()) {
             flipSidePiles();
         }
     });
@@ -188,6 +180,7 @@ function startSpeedGame() {
     io.emit('game:start', {
         players: sanitizeGameStateForClients(),
         centerPiles: game.centerPiles,
+        sidePiles: game.sidePiles,
         phase: game.phase,
     });
 }
@@ -212,7 +205,7 @@ function buildShuffleDeck() {
     return deck;
 }
 
-function handleCardPlay(playerId, card, pile) {
+function handleCardPlay(socket, playerId, card, pile) {
     const player = game.players[playerId];
     if (!player) return;
     if (!game.centerPiles[pile]) return;
@@ -246,10 +239,18 @@ function handleCardPlay(playerId, card, pile) {
         return;
     }
 
+    // Reset flip votes because a valid play happened
+    for (const id in game.flipVotes) {
+    game.flipVotes[id] = false;
+    }
+
+
     // Broadcast updated state
     io.emit('game:update', {
         players: sanitizeGameStateForClients(),
         centerPiles: game.centerPiles,
+        sidePiles: game.sidePiles,
+        flipVotes: game.flipVotes,
     });
 }
 
@@ -285,12 +286,13 @@ function handleDraw(playerId) {
     io.emit('game:update', {
         players: sanitizeGameStateForClients(),
         centerPiles: game.centerPiles,
+        sidePiles: game.sidePiles,
     });
 }
 
 function flipSidePiles() {
     // If either pile is empty, reshuffle center piles instead
-    if (game.sidePiles.left.length === 0 || game.sidePiles.right.length === 0) {
+    if (game.sidePiles.left.length === 0 && game.sidePiles.right.length === 0 && noMovesAvailable()) {
         reshuffleCenterPiles();
         return;
     }
@@ -310,10 +312,8 @@ function flipSidePiles() {
     io.emit('game:update', {
         players: sanitizeGameStateForClients(),
         centerPiles: game.centerPiles,
-        sidePiles: {
-            left: game.sidePiles.left.length,
-            right: game.sidePiles.right.length
-        }
+        sidePiles: game.sidePiles,
+        flipVotes: game.flipVotes,
     });
 }
 
@@ -334,6 +334,12 @@ function reshuffleCenterPiles() {
     game.centerPiles.left = pileCards.pop();
     game.centerPiles.right = pileCards.pop();
 
+    const remaining = pileCards;
+    const half = Math.ceil(remaining.length /2);
+
+    game.sidePiles.left = remaining.slice(0, half);
+    game.sidePiles.right = remaining.slice(half);
+
     // Reset votes
     for (const id in game.flipVotes) {
         game.flipVotes[id] = false;
@@ -342,6 +348,7 @@ function reshuffleCenterPiles() {
     io.emit('game:update', {
         players: sanitizeGameStateForClients(),
         centerPiles: game.centerPiles,
+        sidePiles: game.sidePiles,
         reshuffled: true
     });
 }

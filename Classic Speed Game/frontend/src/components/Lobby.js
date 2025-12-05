@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import GameBoard from "./GameBoard";
+import Results from "./Results";
 import useSpeedSocket from "../hooks/useSpeedSocket";
 
 export default function Lobby() {
@@ -8,7 +9,7 @@ export default function Lobby() {
 
   // ✅ Always call the hook (React requirement)
   const {
-    players,
+    lobbyPlayers,
     gameState,
     countdown,
     sendReady,
@@ -16,6 +17,7 @@ export default function Lobby() {
     drawCard,
     requestFlip,
     socketId,
+    gamePlayers,
   } = useSpeedSocket(submitted ? name : null); 
   // ✅ Pass null until submitted
 
@@ -42,6 +44,8 @@ export default function Lobby() {
     );
   }
 
+  console.log('lobbyPlayers', lobbyPlayers);
+
   // ✅ Countdown screen
   if (countdown !== null && countdown > 0) {
     return <h1>Game starting in {countdown}</h1>;
@@ -56,16 +60,27 @@ export default function Lobby() {
         drawCard={drawCard}
         requestFlip={requestFlip}
         playerId={socketId}
+        gamePlayers={gamePlayers}
       />
     );
   }
+
+  // Results
+  if (gameState?.phase === "finished") {
+  return (
+    <Results
+      winner={gameState.winner}
+      onPlayAgain={() => window.location.reload()}
+    />
+  );
+}
 
   // ✅ Waiting room
   return (
     <div style={{ textAlign: "center", marginTop: "50px" }}>
       <h2>Waiting Room</h2>
-
-    {players?.map((p) => (
+    
+    {lobbyPlayers?.map((p) => (
         <div key={p.id}>
             {p.name} — {p.ready ? "✅ Ready" : "⏳ Waiting"}
         </div>

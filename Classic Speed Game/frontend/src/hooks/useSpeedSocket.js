@@ -4,7 +4,8 @@ import { io } from "socket.io-client";
 export default function useSpeedSocket(playerName) {
   const socketRef = useRef(null);
 
-  const [players, setPlayers] = useState([]);
+  const [lobbyPlayers, setLobbyPlayers] = useState([]);
+  const [gamePlayers, setGamePlayers] = useState([]);
   const [gameState, setGameState] = useState(null);
   const [countdown, setCountdown] = useState(null);
   const [connected, setConnected] = useState(false);
@@ -24,7 +25,7 @@ export default function useSpeedSocket(playerName) {
     });
 
     socket.on("players:update", (players) => {
-      setPlayers(players);
+      setLobbyPlayers(players);
     });
 
     socket.on("game:countdown", ({ seconds }) => {
@@ -32,19 +33,23 @@ export default function useSpeedSocket(playerName) {
     });
 
     socket.on("game:start", (data) => {
+      setGamePlayers(data.players);
       setGameState({
         players: data.players,
         centerPiles: data.centerPiles,
+        sidePiles: data.sidePiles,
         phase: data.phase,
       });
     });
 
     socket.on("game:update", (data) => {
+      setGamePlayers(data.players);
       setGameState((prev) => ({
         ...prev,
         players: data.players,
         centerPiles: data.centerPiles,
         sidePiles: data.sidePiles,
+        flipVotes: data.flipVotes ?? prev.flipVotes,
       }));
     });
 
@@ -92,7 +97,8 @@ export default function useSpeedSocket(playerName) {
 
   return {
     connected,
-    players,
+    lobbyPlayers,
+    gamePlayers,
     gameState,
     countdown,
     sendReady,
