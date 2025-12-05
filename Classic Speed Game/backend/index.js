@@ -3,9 +3,9 @@ const express = require('express');
 const http = require('http');
 const cors = require('cors');
 const session = require('express-session');
-const MongoStore = require('connect-mongo');
+// const MongoStore = require('connect-mongo');
 const { Server } = require('socket.io');
-const connectDB = require('./db');
+//const connectDB = require('./db');
 
 const app = express();
 
@@ -19,12 +19,23 @@ app.use(
 app.use(express.json());
 
 const sessionMiddleware = session({
-  secret: process.env.SESSION_SECRET || 'secret',
-  resave: false,
-  saveUninitialized: false,
-  store: MongoStore.create({ mongoUrl: process.env.MONGO_URI }),
-  cookie: { httpOnly: true },
+    secret: process.env.SESSION_SECRET || 'secret',
+    resave: false,
+    saveUninitialized: false,
+    // store: MongoStore.create({
+    //     clientPromise: (async () => {
+    //         const client = new MongoClient(process.env.MONGO_URI);
+    //         await client.connect();
+    //         return client;
+    //     })(),
+    //     dbName: process.env.MONGO_DB_NAME || 'speedgame',
+    //     collectionName: 'sessions',
+    // }),
+
+
+    cookie: { httpOnly: true },
 });
+
 app.use(sessionMiddleware);
 
 const server = http.createServer(app);
@@ -59,16 +70,6 @@ const game = {
 // --- socket handlers ---
 io.on('connection', (socket) => {
     console.log('Socket connected:', socket.id);
-
-    game.sidePiles = {
-        left: [],
-        right: []
-    };
-
-    game.flipVotes = {
-        [player1]: false,
-        [player2]: false
-    };
 
     // player registers with a name
     socket.on('player:register', ({ name }) => {
@@ -105,7 +106,7 @@ io.on('connection', (socket) => {
 
         const allReady = players.length === 2 && players.every(p => p.ready);
         if (allReady) {
-            startSpeedGame();
+            startCountdownAndStartGame();
         }
     });
 
@@ -250,6 +251,27 @@ function handleCardPlay(playerId, card, pile) {
         players: sanitizeGameStateForClients(),
         centerPiles: game.centerPiles,
     });
+}
+
+function startCountdownAndStartGame() {
+    let seconds = 3;
+
+    // Broadcast countdown
+    io.emit('game:countdown', { seconds });
+
+    const interval = setInterval(() => {
+        seconds -= 1;
+
+        if (seconds > 0) {
+            io.emit('game:countdown', { seconds });
+        } else {
+            clearInterval(interval);
+            io.emit('game:countdown', { seconds: 0 });
+
+            // start game
+            startSpeedGame();
+        }
+    }, 1000);
 }
 
 function handleDraw(playerId) {

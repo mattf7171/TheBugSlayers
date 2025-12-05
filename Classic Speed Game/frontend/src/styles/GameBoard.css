@@ -1,0 +1,78 @@
+.game-board {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+}
+
+/* Opponent section */
+.opponent-section {
+  text-align: center;
+}
+
+.opponent-hand {
+  display: flex;
+  gap: 8px;
+}
+
+/* Center area row */
+.center-area {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  gap: 40px;
+}
+
+/* Side piles */
+.side-pile {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+/* Center piles */
+.center-piles {
+  display: flex;
+  flex-direction: row;
+  gap: 20px;
+}
+
+.pile {
+  text-align: center;
+}
+
+/* Player section */
+.player-section {
+  text-align: center;
+}
+
+.player-hand {
+  display: flex;
+  flex-direction: row;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+/* Card styling */
+.card {
+  width: 60px;
+  height: 90px;
+  border: 1px solid #333;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: white;
+}
+
+.card.back {
+  background: #444;
+  color: transparent;
+}
+
+.actions {
+  margin-top: 10px;
+  display: flex;
+  gap: 10px;
+}
