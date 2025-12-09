@@ -15,9 +15,11 @@ function isPlayable(card, pileCard) {
 }
 
 function hasPlayableCard(hand, centerPiles) {
+  const leftTop = centerPiles.left?.[centerPiles.left.length - 1] || null;
+  const rightTop = centerPiles.right?.[centerPiles.right.length - 1] || null;
   return hand.some(card =>
-    isPlayable(card, centerPiles.left) ||
-    isPlayable(card, centerPiles.right)
+    isPlayable(card, leftTop) ||
+    isPlayable(card, rightTop)
   );
 }
 
@@ -33,8 +35,10 @@ export default function GameBoard({
   if (!gameState) return <div>Loading game...</div>;
 
   const { centerPiles, sidePiles } = gameState;
+  const leftTop = centerPiles.left?.[centerPiles.left.length - 1] || null;
+  const rightTop = centerPiles.right?.[centerPiles.right.length - 1] || null;
 
-  // ✅ Prevent crash when playerId isn't ready yet
+  // Prevent crash when playerId isn't ready yet
   if (!playerId || !gamePlayers || !gamePlayers[playerId]) {
     return <div>Loading your cards...</div>;
   }
@@ -45,8 +49,6 @@ export default function GameBoard({
   const opponent = gamePlayers[opponentId];
 
   const myHand = me.hand;
-
-
 
 
   return (
@@ -85,14 +87,14 @@ export default function GameBoard({
           <div className="pile">
             <h4>Left</h4>
             <div className="card">
-              {centerPiles.left.value} {centerPiles.left.suit}
+              {leftTop ? `${leftTop.value} ${leftTop.suit}` : "Empty"}
             </div>
           </div>
 
           <div className="pile">
             <h4>Right</h4>
             <div className="card">
-              {centerPiles.right.value} {centerPiles.right.suit}
+              {rightTop ? `${rightTop.value} ${rightTop.suit}` : "Empty"}
             </div>
           </div>
         </div>
@@ -128,12 +130,12 @@ export default function GameBoard({
               key={i}
               className="card"
               onClick={() => {
-                if (isPlayable(card, centerPiles.left)) {
+                if (isPlayable(card, leftTop)) {
                   playCard(card, "left");
-                } else if (isPlayable(card, centerPiles.right)) {
+                } else if (isPlayable(card, rightTop)) {
                   playCard(card, "right");
                 }
-                console.log('Playing card:', card);
+                console.log("Playing card:", card);
               }}
             >
               {card.value} {card.suit}

@@ -55,8 +55,8 @@ const game = {
   players: {},      // { socketId: { name, hand: [], pile: [] } }
   deck: [],
   centerPiles: {
-    left: null,
-    right: null,
+    left: [],
+    right: [],
   },
   sidePiles: {
     left: [],
@@ -170,8 +170,8 @@ function startSpeedGame() {
     game.sidePiles.right = game.deck.splice(0, 5);
 
     // Initialize center piles
-    game.centerPiles.left = game.deck.pop();
-    game.centerPiles.right = game.deck.pop();
+    game.centerPiles.left = [game.deck.pop()];
+    game.centerPiles.right = [game.deck.pop()];
 
     // Set phase
     game.phase = 'playing';
@@ -208,9 +208,12 @@ function buildShuffleDeck() {
 function handleCardPlay(socket, playerId, card, pile) {
     const player = game.players[playerId];
     if (!player) return;
-    if (!game.centerPiles[pile]) return;
 
-    const pileValue = game.centerPiles[pile].value;
+    const pileStack = game.centerPiles[pile];
+    if (!pileStack || pileStack.length === 0) return;
+
+    const topCard = pileStack[pileStack.length - 1];
+    const pileValue = topCard.value;
     const cardValue = card.value;
 
     const isValid =
@@ -224,7 +227,7 @@ function handleCardPlay(socket, playerId, card, pile) {
     player.hand = player.hand.filter(c => !(c.value === cardValue && c.suit === card.suit));
 
     // Update pile
-    game.centerPiles[pile] = card;
+    game.centerPiles[pile].push(card);
 
     // Refill hand if possible
     if (player.drawPile.length > 0 && player.hand.length < 5) {
@@ -243,7 +246,6 @@ function handleCardPlay(socket, playerId, card, pile) {
     for (const id in game.flipVotes) {
     game.flipVotes[id] = false;
     }
-
 
     // Broadcast updated state
     io.emit('game:update', {
@@ -287,6 +289,7 @@ function handleDraw(playerId) {
         players: sanitizeGameStateForClients(),
         centerPiles: game.centerPiles,
         sidePiles: game.sidePiles,
+        flipVotes: game.flipVotes,
     });
 }
 
@@ -301,8 +304,8 @@ function flipSidePiles() {
     const leftCard = game.sidePiles.left.pop();
     const rightCard = game.sidePiles.right.pop();
 
-    game.centerPiles.left = leftCard;
-    game.centerPiles.right = rightCard;
+    if (leftCard) game.centerPiles.left.push(leftCard);
+    if (rightCard) game.centerPiles.right.push(rightCard);
 
     // Reset votes
     for (const id in game.flipVotes) {
@@ -318,11 +321,23 @@ function flipSidePiles() {
 }
 
 function reshuffleCenterPiles() {
-    const pileCards = [];
+    console.log("RESHUFFLING...");
 
-    // Collect all cards from center piles
-    if (game.centerPiles.left) pileCards.push(game.centerPiles.left);
-    if (game.centerPiles.right) pileCards.push(game.centerPiles.right);
+    // Collect all cards from center piles (flatten)
+    const pileCards = [
+        ...game.centerPiles.left,
+        ...game.centerPiles.right,
+    ];
+
+    console.log("Collected cards:", pileCards);
+
+    game.centerPiles.left = [];
+    game.centerPiles.right = [];
+    
+    if (pileCards.length < 2) {
+        console.log('Not enough cards to reshuffle center piles...');
+        return;
+    }
 
     // Shuffle them
     for (let i = pileCards.length - 1; i > 0; i--) {
@@ -330,15 +345,18 @@ function reshuffleCenterPiles() {
         [pileCards[i], pileCards[j]] = [pileCards[j], pileCards[i]];
     }
 
-    // Reset center piles
-    game.centerPiles.left = pileCards.pop();
-    game.centerPiles.right = pileCards.pop();
+    // Reset center piles with one card each (as stacks)
+    game.centerPiles.left.push(pileCards.pop());
+    game.centerPiles.right.push(pileCards.pop());
+
+    console.log("New center piles:", game.centerPiles);
 
     const remaining = pileCards;
     const half = Math.ceil(remaining.length /2);
 
     game.sidePiles.left = remaining.slice(0, half);
     game.sidePiles.right = remaining.slice(half);
+    console.log("New side piles:", game.sidePiles);
 
     // Reset votes
     for (const id in game.flipVotes) {
@@ -349,17 +367,21 @@ function reshuffleCenterPiles() {
         players: sanitizeGameStateForClients(),
         centerPiles: game.centerPiles,
         sidePiles: game.sidePiles,
+        flipVotes: game.flipVotes,
         reshuffled: true
     });
 }
 
 function noMovesAvailable() {
-    const left = game.centerPiles.left;
-    const right = game.centerPiles.right;
+    const leftStack = game.centerPiles.left;
+    const rightStack = game.centerPiles.right;
 
-    if (!left || !right) return false;
+    if (!leftStack.length || !rightStack.length) return false;
 
-    const piles = [left.value, right.value];
+    const leftTop = leftStack[leftStack.length - 1];
+    const rightTop = rightStack[rightStack.length - 1];
+
+    const piles = [leftTop.value, rightTop.value];
 
     // check every player's hand
     for (const playerId in game.players) {
@@ -398,7 +420,7 @@ function resetGameState() {
     game.phase = 'waiting';
     game.players = {};
     game.deck = [];
-    game.centerPiles = { left: null, right: null };
+    game.centerPiles = { left: [], right: [] };
     game.sidePiles = { left: [], right: []};
     game.flipVotes = {};
     game.winner = null;
