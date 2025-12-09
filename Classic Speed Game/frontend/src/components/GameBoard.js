@@ -1,5 +1,7 @@
 import React from "react";
 import "../styles/GameBoard.css";
+import { useDrag } from "react-dnd";
+import { useDrop } from "react-dnd";
 
 function isPlayable(card, pileCard) {
   if (!pileCard) return false;
@@ -17,12 +19,55 @@ function isPlayable(card, pileCard) {
 function hasPlayableCard(hand, centerPiles) {
   const leftTop = centerPiles.left?.[centerPiles.left.length - 1] || null;
   const rightTop = centerPiles.right?.[centerPiles.right.length - 1] || null;
-  return hand.some(card =>
-    isPlayable(card, leftTop) ||
-    isPlayable(card, rightTop)
+  return hand.some((card) =>
+    isPlayable(card, leftTop) || isPlayable(card, rightTop)
   );
 }
 
+function DraggableCard({ cardId, value, suit }) {
+  const [{ isDragging }, dragRef] = useDrag(() => ({
+    type: "CARD",
+    item: { cardId },
+    collect: (monitor) => ({
+      isDragging: monitor.isDragging(),
+    }),
+  }));
+
+  return (
+    <div
+      ref={dragRef}
+      className="card"
+      style={{ opacity: isDragging ? 0.5 : 1 }}
+    >
+      {value} {suit}
+    </div>
+  );
+}
+
+function DropPile({ pileName, topCard, onDrop }) {
+  const [{ isOver }, dropRef] = useDrop(() => ({
+    accept: "CARD",
+    drop: (item) => onDrop(item.cardId, pileName),
+    collect: (monitor) => ({
+      isOver: monitor.isOver(),
+    }),
+  }));
+
+  return (
+    <div
+      ref={dropRef}
+      className="pile"
+      style={{
+        backgroundColor: isOver ? "#d0ffd0" : "transparent",
+      }}
+    >
+      <h4>{pileName}</h4>
+      <div className="card">
+        {topCard ? `${topCard.value} ${topCard.suit}` : "Empty"}
+      </div>
+    </div>
+  );
+}
 
 export default function GameBoard({
   gameState,
@@ -32,23 +77,47 @@ export default function GameBoard({
   playerId,
   gamePlayers,
 }) {
+
+  // ✅ Hooks must always run first
+  const gamePlayersRef = React.useRef(gamePlayers);
+  gamePlayersRef.current = gamePlayers;
+
+  // ✅ Now safe to early-return
   if (!gameState) return <div>Loading game...</div>;
+  if (!playerId || !gamePlayers || !gamePlayers[playerId]) {
+    return <div>Loading your cards...</div>;
+  }
 
   const { centerPiles, sidePiles } = gameState;
   const leftTop = centerPiles.left?.[centerPiles.left.length - 1] || null;
   const rightTop = centerPiles.right?.[centerPiles.right.length - 1] || null;
 
-  // Prevent crash when playerId isn't ready yet
-  if (!playerId || !gamePlayers || !gamePlayers[playerId]) {
-    return <div>Loading your cards...</div>;
-  }
 
   const me = gamePlayers[playerId];
+  const myHand = me.hand;
 
-  const opponentId = Object.keys(gamePlayers).find((id) => id !== playerId);
+  const playerIds = Object.keys(gamePlayers);
+  const opponentId = playerIds.find(id => id !== playerId);
   const opponent = gamePlayers[opponentId];
 
-  const myHand = me.hand;
+  console.log("Frontend hand IDs:", myHand.map((c) => c.id));
+
+  // Use latest gamePlayers when a drop occurs, to avoid stale closures
+  const handleDrop = (cardId, pile) => {
+    const latestMe = gamePlayersRef.current[playerId];
+    const latestHand = latestMe?.hand || [];
+
+    console.log("handleDrop → latestHand IDs:", latestHand.map(c => c.id));
+    console.log("handleDrop → cardId:", cardId);
+
+    const card = latestHand.find(c => c.id === cardId);
+    if (!card) {
+      console.warn("Card not found in latest hand:", cardId, latestHand);
+      return;
+    }
+
+    playCard(card.id, pile);
+  };
 
 
   return (
@@ -67,7 +136,6 @@ export default function GameBoard({
         <h3>
           {opponent?.name} — Draw: {opponent.drawCount}
         </h3>
-
       </div>
 
       {/* Center Area */}
@@ -84,19 +152,8 @@ export default function GameBoard({
         </div>
 
         <div className="center-piles">
-          <div className="pile">
-            <h4>Left</h4>
-            <div className="card">
-              {leftTop ? `${leftTop.value} ${leftTop.suit}` : "Empty"}
-            </div>
-          </div>
-
-          <div className="pile">
-            <h4>Right</h4>
-            <div className="card">
-              {rightTop ? `${rightTop.value} ${rightTop.suit}` : "Empty"}
-            </div>
-          </div>
+          <DropPile pileName="left" topCard={leftTop} onDrop={handleDrop} />
+          <DropPile pileName="right" topCard={rightTop} onDrop={handleDrop} />
         </div>
 
         <div className="side-pile right">
@@ -112,12 +169,14 @@ export default function GameBoard({
 
         <div className="flip-status">
           <h4>Flip Votes</h4>
-          <div>You: {gameState.flipVotes?.[playerId] ? "✅ Voted" : "⏳ Not yet"}</div>
           <div>
-            {opponent?.name}: {gameState.flipVotes?.[opponentId] ? "✅ Voted" : "⏳ Not yet"}
+            You: {gameState.flipVotes?.[playerId] ? "✅ Voted" : "⏳ Not yet"}
+          </div>
+          <div>
+            {opponent?.name}:{" "}
+            {gameState.flipVotes?.[opponentId] ? "✅ Voted" : "⏳ Not yet"}
           </div>
         </div>
-
       </div>
 
       {/* Player Section */}
@@ -125,28 +184,19 @@ export default function GameBoard({
         <h3>{me?.name}</h3>
 
         <div className="player-hand">
-          {myHand.map((card, i) => (
-            <div
-              key={i}
-              className="card"
-              onClick={() => {
-                if (isPlayable(card, leftTop)) {
-                  playCard(card, "left");
-                } else if (isPlayable(card, rightTop)) {
-                  playCard(card, "right");
-                }
-                console.log("Playing card:", card);
-              }}
-            >
-              {card.value} {card.suit}
-            </div>
+          {myHand.map((card) => (
+            <DraggableCard
+              key={card.id}
+              cardId={card.id}
+              value={card.value}
+              suit={card.suit}
+            />
           ))}
         </div>
 
         <h3>
           {me?.name} — Draw: {me.drawCount}
         </h3>
-
 
         <div className="actions">
           <button
@@ -160,7 +210,6 @@ export default function GameBoard({
           >
             Flip
           </button>
-
         </div>
       </div>
     </div>

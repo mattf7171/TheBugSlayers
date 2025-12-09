@@ -3,9 +3,7 @@ const express = require('express');
 const http = require('http');
 const cors = require('cors');
 const session = require('express-session');
-// const MongoStore = require('connect-mongo');
 const { Server } = require('socket.io');
-//const connectDB = require('./db');
 
 const app = express();
 
@@ -19,21 +17,10 @@ app.use(
 app.use(express.json());
 
 const sessionMiddleware = session({
-    secret: process.env.SESSION_SECRET || 'secret',
-    resave: false,
-    saveUninitialized: false,
-    // store: MongoStore.create({
-    //     clientPromise: (async () => {
-    //         const client = new MongoClient(process.env.MONGO_URI);
-    //         await client.connect();
-    //         return client;
-    //     })(),
-    //     dbName: process.env.MONGO_DB_NAME || 'speedgame',
-    //     collectionName: 'sessions',
-    // }),
-
-
-    cookie: { httpOnly: true },
+  secret: process.env.SESSION_SECRET || 'secret',
+  resave: false,
+  saveUninitialized: false,
+  cookie: { httpOnly: true },
 });
 
 app.use(sessionMiddleware);
@@ -49,10 +36,12 @@ io.use((socket, next) => {
 });
 
 // --- in-memory match state ---
-const players = [];
+// NOTE: strictly 2 players; treat refresh as a brand new player.
+// This array holds *current* connected players only.
+const players = []; // [{ id: socketId, name, ready }]
 const game = {
   phase: 'waiting', // waiting → ready → playing → finished
-  players: {},      // { socketId: { name, hand: [], pile: [] } }
+  players: {},      // { socketId: { name, hand: [], drawPile: [] } }
   deck: [],
   centerPiles: {
     left: [],
@@ -60,375 +49,392 @@ const game = {
   },
   sidePiles: {
     left: [],
-    right: []
+    right: [],
   },
   flipVotes: {},
   winner: null,
 };
 
-
 // --- socket handlers ---
 io.on('connection', (socket) => {
-    console.log('Socket connected:', socket.id);
+  console.log('Socket connected:', socket.id);
 
-    // player registers with a name
-    socket.on('player:register', ({ name }) => {
-        const trimmed = (name || '').trim();
-        if (!trimmed) return;
+  // player registers with a name
+  socket.on('player:register', ({ name }) => {
+    const trimmed = (name || '').trim();
+    if (!trimmed) return;
 
-        socket.request.session.playerName = trimmed;
-        socket.request.session.save();
+    socket.request.session.playerName = trimmed;
+    socket.request.session.save();
 
-        // avoid duplicates if they reconnect
-        const existing = players.find((p) => p.id === socket.id);
-        if (!existing) {
-            players.push({ id: socket.id, name: trimmed });
-        } else {
-            existing.name = trimmed;
-        }
+    // remove any stale entry with this id, then add fresh
+    const existingIdx = players.findIndex((p) => p.id === socket.id);
+    if (existingIdx !== -1) {
+      players.splice(existingIdx, 1);
+    }
 
-        socket.emit('player:registered', { name: trimmed });
-        io.emit(
-            'players:update',
-            players
-        );
-    }); // end player register
+    // if already 2 players, ignore extra join attempts (or you could queue)
+    if (players.length >= 2) {
+      console.log('Lobby full; ignoring extra player:', trimmed);
+      return;
+    }
 
-    // both players are ready
-    socket.on('player:ready', () => { 
-        // player ready logic
-        const p = players.find(p => p.id === socket.id);
-        if (!p) return;
+    players.push({ id: socket.id, name: trimmed, ready: false });
 
-        p.ready = true;
+    // send back explicit playerId
+    socket.emit('player:registered', { name: trimmed, playerId: socket.id });
 
-        io.emit('players:update', players);
+    io.emit('players:update', players);
+  });
 
-        const allReady = players.length === 2 && players.every(p => p.ready);
-        if (allReady) {
-            startCountdownAndStartGame();
-        }
-    });
+  // both players are ready
+  socket.on('player:ready', () => {
+    const p = players.find((p) => p.id === socket.id);
+    if (!p) return;
 
-    // Player attempts to play a card
-    socket.on('card:play', ({ card, pile }) => {
-        // card play logic
-        handleCardPlay(socket, socket.id, card, pile);
-    });
+    p.ready = true;
+    io.emit('players:update', players);
 
-    // Player draws from deck
-    socket.on('card:draw', () => {
-        // draw card logic
-        handleDraw(socket.id);
-    });
+    const allReady = players.length === 2 && players.every((p) => p.ready);
+    if (allReady) {
+      startCountdownAndStartGame();
+    }
+  });
 
-    // Flip the side piles if voted
-    socket.on('pile:flipRequest', () => {
-        // Record Vote
-        game.flipVotes[socket.id] = true;
+  // Player attempts to play a card
+  socket.on('card:play', ({ cardId, pile }) => {
+    handleCardPlay(socket, socket.id, cardId, pile);
+  });
 
-        // Broadcast vote status to UI
-        io.emit('pile:flipStatus', game.flipVotes);
+  // Player draws from deck
+  socket.on('card:draw', () => {
+    handleDraw(socket.id);
+  });
 
-        const allVoted = Object.values(game.flipVotes).every(v => v === true);
+  // Flip the side piles if voted
+  socket.on('pile:flipRequest', () => {
+    game.flipVotes[socket.id] = true;
 
-        if (allVoted && noMovesAvailable()) {
-            flipSidePiles();
-        }
-    });
+    io.emit('pile:flipStatus', game.flipVotes);
 
-    socket.on('disconnect', () => {
-        const idx = players.findIndex((p) => p.id === socket.id);
-        if (idx !== -1) {
-            players.splice(idx, 1);
-            io.emit(
-                'players:update',
-                players.map((p) => p.name)
-            );
-        }
-    });
+    const allVoted = Object.values(game.flipVotes).every((v) => v === true);
+    if (allVoted && noMovesAvailable()) {
+      flipSidePiles();
+    }
+  });
+
+  socket.on('disconnect', () => {
+    console.log('Socket disconnected:', socket.id);
+
+    // remove from lobby players
+    const idx = players.findIndex((p) => p.id === socket.id);
+    if (idx !== -1) {
+      players.splice(idx, 1);
+    }
+
+    // remove from game state
+    delete game.players[socket.id];
+    delete game.flipVotes[socket.id];
+
+    // if we lose a player during a game, reset everything
+    if (game.phase === 'playing') {
+      resetGameState();
+      io.emit('game:finished', { winner: null, reason: 'player_disconnected' });
+    }
+
+    io.emit('players:update', players);
+  });
 }); // end io.on connection
 
+// ---------------- GAME LOGIC ----------------
+
 function startSpeedGame() {
-    // reset game in case users are playing again
-    resetGameState();
+  // reset game in case users are playing again
+  resetGameState();
 
-    // Build and shuffle the deck
-    game.deck = buildShuffleDeck();
+  // Build and shuffle the deck
+  game.deck = buildShuffleDeck();
 
-    // Initialize the Player objects
-    players.forEach(p=> {
-        game.flipVotes[p.id] = false;
-        game.players[p.id] = {
-            name: p.name,
-            hand: game.deck.splice(0, 5),
-            drawPile: game.deck.splice(0, 15),
-        };
-    });
+  // Initialize the Player objects for exactly the 2 players in the lobby
+  players.forEach((p) => {
+    game.flipVotes[p.id] = false;
+    game.players[p.id] = {
+      name: p.name,
+      hand: game.deck.splice(0, 5),
+      drawPile: game.deck.splice(0, 15),
+    };
+  });
 
-    game.sidePiles.left = game.deck.splice(0, 5);
-    game.sidePiles.right = game.deck.splice(0, 5);
+  game.sidePiles.left = game.deck.splice(0, 5);
+  game.sidePiles.right = game.deck.splice(0, 5);
 
-    // Initialize center piles
-    game.centerPiles.left = [game.deck.pop()];
-    game.centerPiles.right = [game.deck.pop()];
+  // Initialize center piles
+  game.centerPiles.left = [game.deck.pop()];
+  game.centerPiles.right = [game.deck.pop()];
 
-    // Set phase
-    game.phase = 'playing';
+  game.phase = 'playing';
 
-    // Broadcast
-    io.emit('game:start', {
-        players: sanitizeGameStateForClients(),
-        centerPiles: game.centerPiles,
-        sidePiles: game.sidePiles,
-        phase: game.phase,
-    });
+  io.emit('game:start', {
+    players: sanitizeGameStateForClients(),
+    centerPiles: game.centerPiles,
+    sidePiles: game.sidePiles,
+    phase: game.phase,
+  });
 }
 
 function buildShuffleDeck() {
-    const suits = ['♠', '♥', '♦', '♣'];
-    const values = [1,2,3,4,5,6,7,8,9,10,11,12,13];
+  const suits = ['♠', '♥', '♦', '♣'];
+  const values = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13];
 
-    const deck = [];
-    for (const s of suits) {
-        for (const v of values) {
-            deck.push({ value: v, suit: s });
-        }
+  const deck = [];
+  for (const s of suits) {
+    for (const v of values) {
+      deck.push({
+        id: `${s}-${v}-${Math.random().toString(36).slice(2)}`,
+        value: v,
+        suit: s,
+      });
     }
+  }
 
-    // Shuffle ( Fisher-Yates shuffle )
-    for (let i = deck.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [deck[i], deck[j]] = [deck[j], deck[i]];
-    }
+  // Shuffle (Fisher-Yates shuffle)
+  for (let i = deck.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [deck[i], deck[j]] = [deck[j], deck[i]];
+  }
 
-    return deck;
+  return deck;
 }
 
-function handleCardPlay(socket, playerId, card, pile) {
-    const player = game.players[playerId];
-    if (!player) return;
+function handleCardPlay(socket, playerId, cardId, pile) {
+  const player = game.players[playerId];
+  if (!player) return;
 
-    const pileStack = game.centerPiles[pile];
-    if (!pileStack || pileStack.length === 0) return;
+  const card = player.hand.find((c) => c.id === cardId);
+  if (!card) {
+    console.log('ERROR: Card not found in hand:', cardId, 'for player', playerId);
+    return;
+  }
 
-    const topCard = pileStack[pileStack.length - 1];
-    const pileValue = topCard.value;
-    const cardValue = card.value;
+  const pileStack = game.centerPiles[pile];
+  if (!pileStack || pileStack.length === 0) return;
 
-    const isValid =
-        Math.abs(cardValue - pileValue) === 1 ||
-        (cardValue === 1 && pileValue === 13) ||
-        (cardValue === 13 && pileValue === 1);
+  const topCard = pileStack[pileStack.length - 1];
+  const pileValue = topCard.value;
+  const cardValue = card.value;
 
-    if (!isValid) return;
+  const isValid =
+    Math.abs(cardValue - pileValue) === 1 ||
+    (cardValue === 1 && pileValue === 13) ||
+    (cardValue === 13 && pileValue === 1);
 
-    // Remove card from hand
-    player.hand = player.hand.filter(c => !(c.value === cardValue && c.suit === card.suit));
+  if (!isValid) return;
 
-    // Update pile
-    game.centerPiles[pile].push(card);
+  console.log('Player playing card:', playerId);
+  console.log('Player hand BEFORE:', player.hand.map((c) => c.id));
 
-    // Refill hand if possible
-    if (player.drawPile.length > 0 && player.hand.length < 5) {
-        player.hand.push(player.drawPile.pop());
-    }
+  // Remove card from hand
+  player.hand = player.hand.filter((c) => c.id !== card.id);
 
-    // Check win
-    if (player.hand.length === 0 && player.drawPile.length === 0) {
-        game.phase = 'finished';
-        game.winner = playerId;
-        io.emit('game:finished', { winner: player.name });
-        return;
-    }
+  // Update pile
+  game.centerPiles[pile].push(card);
 
-    // Reset flip votes because a valid play happened
-    for (const id in game.flipVotes) {
+  // Refill only THIS player's hand after a valid play
+  if (player.drawPile.length > 0 && player.hand.length < 5) {
+    player.hand.push(player.drawPile.pop());
+  }
+
+  // Check win
+  if (player.hand.length === 0 && player.drawPile.length === 0) {
+    game.phase = 'finished';
+    game.winner = playerId;
+    io.emit('game:finished', { winner: player.name });
+    return;
+  }
+
+  // Reset flip votes because a valid play happened
+  for (const id in game.flipVotes) {
     game.flipVotes[id] = false;
-    }
+  }
 
-    // Broadcast updated state
-    io.emit('game:update', {
-        players: sanitizeGameStateForClients(),
-        centerPiles: game.centerPiles,
-        sidePiles: game.sidePiles,
-        flipVotes: game.flipVotes,
-    });
+  // Broadcast updated state
+  io.emit('game:update', {
+    players: sanitizeGameStateForClients(),
+    centerPiles: game.centerPiles,
+    sidePiles: game.sidePiles,
+    flipVotes: game.flipVotes,
+  });
 }
 
 function startCountdownAndStartGame() {
-    let seconds = 3;
+  let seconds = 3;
 
-    // Broadcast countdown
-    io.emit('game:countdown', { seconds });
+  io.emit('game:countdown', { seconds });
 
-    const interval = setInterval(() => {
-        seconds -= 1;
+  const interval = setInterval(() => {
+    seconds -= 1;
 
-        if (seconds > 0) {
-            io.emit('game:countdown', { seconds });
-        } else {
-            clearInterval(interval);
-            io.emit('game:countdown', { seconds: 0 });
+    if (seconds > 0) {
+      io.emit('game:countdown', { seconds });
+    } else {
+      clearInterval(interval);
+      io.emit('game:countdown', { seconds: 0 });
 
-            // start game
-            startSpeedGame();
-        }
-    }, 1000);
+      startSpeedGame();
+    }
+  }, 1000);
 }
 
 function handleDraw(playerId) {
-    const player = game.players[playerId];
-    if (!player) return;
+  const player = game.players[playerId];
+  if (!player) return;
 
-    if (player.drawPile.length > 0 && player.hand.length < 5) {
-        player.hand.push(player.drawPile.pop());
-    }
+  console.log('Player drawing:', playerId);
+  console.log('Hand BEFORE draw:', player.hand.map((c) => c.id));
 
-    io.emit('game:update', {
-        players: sanitizeGameStateForClients(),
-        centerPiles: game.centerPiles,
-        sidePiles: game.sidePiles,
-        flipVotes: game.flipVotes,
-    });
+  if (player.drawPile.length > 0 && player.hand.length < 5) {
+    player.hand.push(player.drawPile.pop());
+  }
+
+  io.emit('game:update', {
+    players: sanitizeGameStateForClients(),
+    centerPiles: game.centerPiles,
+    sidePiles: game.sidePiles,
+    flipVotes: game.flipVotes,
+  });
 }
 
 function flipSidePiles() {
-    // If either pile is empty, reshuffle center piles instead
-    if (game.sidePiles.left.length === 0 && game.sidePiles.right.length === 0 && noMovesAvailable()) {
-        reshuffleCenterPiles();
-        return;
-    }
+  if (
+    game.sidePiles.left.length === 0 &&
+    game.sidePiles.right.length === 0 &&
+    noMovesAvailable()
+  ) {
+    reshuffleCenterPiles();
+    return;
+  }
 
-    // Flip one card from each side pile
-    const leftCard = game.sidePiles.left.pop();
-    const rightCard = game.sidePiles.right.pop();
+  const leftCard = game.sidePiles.left.pop();
+  const rightCard = game.sidePiles.right.pop();
 
-    if (leftCard) game.centerPiles.left.push(leftCard);
-    if (rightCard) game.centerPiles.right.push(rightCard);
+  if (leftCard) game.centerPiles.left.push(leftCard);
+  if (rightCard) game.centerPiles.right.push(rightCard);
 
-    // Reset votes
-    for (const id in game.flipVotes) {
-        game.flipVotes[id] = false;
-    }
+  for (const id in game.flipVotes) {
+    game.flipVotes[id] = false;
+  }
 
-    io.emit('game:update', {
-        players: sanitizeGameStateForClients(),
-        centerPiles: game.centerPiles,
-        sidePiles: game.sidePiles,
-        flipVotes: game.flipVotes,
-    });
+  io.emit('game:update', {
+    players: sanitizeGameStateForClients(),
+    centerPiles: game.centerPiles,
+    sidePiles: game.sidePiles,
+    flipVotes: game.flipVotes,
+  });
 }
 
 function reshuffleCenterPiles() {
-    console.log("RESHUFFLING...");
+  console.log('RESHUFFLING...');
 
-    // Collect all cards from center piles (flatten)
-    const pileCards = [
-        ...game.centerPiles.left,
-        ...game.centerPiles.right,
-    ];
+  const pileCards = [...game.centerPiles.left, ...game.centerPiles.right];
 
-    console.log("Collected cards:", pileCards);
+  console.log('Collected cards:', pileCards);
 
-    game.centerPiles.left = [];
-    game.centerPiles.right = [];
-    
-    if (pileCards.length < 2) {
-        console.log('Not enough cards to reshuffle center piles...');
-        return;
-    }
+  game.centerPiles.left = [];
+  game.centerPiles.right = [];
 
-    // Shuffle them
-    for (let i = pileCards.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [pileCards[i], pileCards[j]] = [pileCards[j], pileCards[i]];
-    }
+  if (pileCards.length < 2) {
+    console.log('Not enough cards to reshuffle center piles...');
+    return;
+  }
 
-    // Reset center piles with one card each (as stacks)
-    game.centerPiles.left.push(pileCards.pop());
-    game.centerPiles.right.push(pileCards.pop());
+  for (let i = pileCards.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [pileCards[i], pileCards[j]] = [pileCards[j], pileCards[i]];
+  }
 
-    console.log("New center piles:", game.centerPiles);
+  game.centerPiles.left.push(pileCards.pop());
+  game.centerPiles.right.push(pileCards.pop());
 
-    const remaining = pileCards;
-    const half = Math.ceil(remaining.length /2);
+  console.log('New center piles:', game.centerPiles);
 
-    game.sidePiles.left = remaining.slice(0, half);
-    game.sidePiles.right = remaining.slice(half);
-    console.log("New side piles:", game.sidePiles);
+  const remaining = pileCards;
+  const half = Math.ceil(remaining.length / 2);
 
-    // Reset votes
-    for (const id in game.flipVotes) {
-        game.flipVotes[id] = false;
-    }
+  game.sidePiles.left = remaining.slice(0, half);
+  game.sidePiles.right = remaining.slice(half);
+  console.log('New side piles:', game.sidePiles);
 
-    io.emit('game:update', {
-        players: sanitizeGameStateForClients(),
-        centerPiles: game.centerPiles,
-        sidePiles: game.sidePiles,
-        flipVotes: game.flipVotes,
-        reshuffled: true
-    });
+  for (const id in game.flipVotes) {
+    game.flipVotes[id] = false;
+  }
+
+  io.emit('game:update', {
+    players: sanitizeGameStateForClients(),
+    centerPiles: game.centerPiles,
+    sidePiles: game.sidePiles,
+    flipVotes: game.flipVotes,
+    reshuffled: true,
+  });
 }
 
 function noMovesAvailable() {
-    const leftStack = game.centerPiles.left;
-    const rightStack = game.centerPiles.right;
+  const leftStack = game.centerPiles.left;
+  const rightStack = game.centerPiles.right;
 
-    if (!leftStack.length || !rightStack.length) return false;
+  if (!leftStack.length || !rightStack.length) return false;
 
-    const leftTop = leftStack[leftStack.length - 1];
-    const rightTop = rightStack[rightStack.length - 1];
+  const leftTop = leftStack[leftStack.length - 1];
+  const rightTop = rightStack[rightStack.length - 1];
 
-    const piles = [leftTop.value, rightTop.value];
+  const piles = [leftTop.value, rightTop.value];
 
-    // check every player's hand
-    for (const playerId in game.players) {
-        const player = game.players[playerId];
+  for (const playerId in game.players) {
+    const player = game.players[playerId];
 
-        for (const card of player.hand) {
-            const v = card.value;
+    for (const card of player.hand) {
+      const v = card.value;
 
-            for (const pileValue of piles) {
-                const isValid = Math.abs(v - pileValue) === 1 || (v === 1 && pileValue === 13) || (v === 13 && pileValue === 1);
+      for (const pileValue of piles) {
+        const isValid =
+          Math.abs(v - pileValue) === 1 ||
+          (v === 1 && pileValue === 13) ||
+          (v === 13 && pileValue === 1);
 
-                if (isValid) {
-                    return false; // someone can play a card
-                }
-            }
+        if (isValid) {
+          return false;
         }
+      }
     }
+  }
 
-    return true; // No moves are available
+  return true;
 }
 
 function sanitizeGameStateForClients() {
-    const result = {};
-    for (const [id, p] of Object.entries(game.players)) {
-        result[id] = {
-            name: p.name,
-            hand: p.hand,
-            drawCount: p.drawPile.length,
-        };
-    }
-
-    return result;
+  const result = {};
+  for (const [id, p] of Object.entries(game.players)) {
+    result[id] = {
+      name: p.name,
+      hand: p.hand.map((c) => ({ ...c })),
+      drawCount: p.drawPile.length,
+    };
+  }
+  return result;
 }
 
 function resetGameState() {
-    game.phase = 'waiting';
-    game.players = {};
-    game.deck = [];
-    game.centerPiles = { left: [], right: [] };
-    game.sidePiles = { left: [], right: []};
-    game.flipVotes = {};
-    game.winner = null;
+  game.phase = 'waiting';
+  game.players = {};
+  game.deck = [];
+  game.centerPiles = { left: [], right: [] };
+  game.sidePiles = { left: [], right: [] };
+  game.flipVotes = {};
+  game.winner = null;
 
-    players.forEach(p => p.ready = false);
+  players.forEach((p) => (p.ready = false));
 }
 
-// --- start server after seeding phrases (if needed) ---
+// --- start server ---
 (async () => {
   server.listen(4000, () =>
     console.log('Backend running on http://localhost:4000')

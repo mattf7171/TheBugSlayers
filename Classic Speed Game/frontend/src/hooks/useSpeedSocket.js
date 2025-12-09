@@ -5,7 +5,7 @@ export default function useSpeedSocket(playerName) {
   const socketRef = useRef(null);
 
   const [lobbyPlayers, setLobbyPlayers] = useState([]);
-  const [gamePlayers, setGamePlayers] = useState([]);
+  const [gamePlayers, setGamePlayers] = useState({});   // ✅ FIXED: object, not array
   const [gameState, setGameState] = useState(null);
   const [countdown, setCountdown] = useState(null);
   const [connected, setConnected] = useState(false);
@@ -21,7 +21,13 @@ export default function useSpeedSocket(playerName) {
 
     socket.on("connect", () => {
       setConnected(true);
+      // ✅ temporary ID until backend confirms
       setSocketId(socket.id);
+    });
+
+    // ✅ authoritative ID from backend
+    socket.on("player:registered", ({ name, playerId }) => {
+      setSocketId(playerId);
     });
 
     socket.on("players:update", (players) => {
@@ -33,7 +39,7 @@ export default function useSpeedSocket(playerName) {
     });
 
     socket.on("game:start", (data) => {
-      setGamePlayers(data.players);
+      setGamePlayers(data.players);   // ✅ players is an object
       setGameState({
         players: data.players,
         centerPiles: data.centerPiles,
@@ -43,7 +49,7 @@ export default function useSpeedSocket(playerName) {
     });
 
     socket.on("game:update", (data) => {
-      setGamePlayers(data.players);
+      setGamePlayers(data.players);   // ✅ always object
       setGameState((prev) => ({
         ...prev,
         players: data.players,
@@ -69,7 +75,7 @@ export default function useSpeedSocket(playerName) {
     });
 
     return () => socket.disconnect();
-  }, []); // ✅ empty array → runs once only
+  }, []);
 
   // ✅ 2. Register player name AFTER socket connects
   useEffect(() => {
@@ -83,8 +89,8 @@ export default function useSpeedSocket(playerName) {
     socketRef.current.emit("player:ready");
   };
 
-  const playCard = (card, pile) => {
-    socketRef.current.emit("card:play", { card, pile });
+  const playCard = (cardId, pile) => {
+    socketRef.current.emit("card:play", { cardId, pile });
   };
 
   const drawCard = () => {
