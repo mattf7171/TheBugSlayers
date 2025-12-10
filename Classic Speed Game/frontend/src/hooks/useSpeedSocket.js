@@ -5,13 +5,13 @@ export default function useSpeedSocket(playerName) {
   const socketRef = useRef(null);
 
   const [lobbyPlayers, setLobbyPlayers] = useState([]);
-  const [gamePlayers, setGamePlayers] = useState({});   // ✅ FIXED: object, not array
+  const [gamePlayers, setGamePlayers] = useState({});
   const [gameState, setGameState] = useState(null);
   const [countdown, setCountdown] = useState(null);
   const [connected, setConnected] = useState(false);
   const [socketId, setSocketId] = useState(null);
 
-  // ✅ 1. Create socket ONCE
+  // Create socket connection once
   useEffect(() => {
     const socket = io("http://localhost:4000", {
       withCredentials: true,
@@ -21,11 +21,9 @@ export default function useSpeedSocket(playerName) {
 
     socket.on("connect", () => {
       setConnected(true);
-      // ✅ temporary ID until backend confirms
       setSocketId(socket.id);
     });
 
-    // ✅ authoritative ID from backend
     socket.on("player:registered", ({ name, playerId }) => {
       setSocketId(playerId);
     });
@@ -39,17 +37,19 @@ export default function useSpeedSocket(playerName) {
     });
 
     socket.on("game:start", (data) => {
-      setGamePlayers(data.players);   // ✅ players is an object
+      setGamePlayers(data.players);
       setGameState({
         players: data.players,
         centerPiles: data.centerPiles,
         sidePiles: data.sidePiles,
         phase: data.phase,
+        flipVotes: {},
       });
+      setCountdown(null);
     });
 
     socket.on("game:update", (data) => {
-      setGamePlayers(data.players);   // ✅ always object
+      setGamePlayers(data.players);
       setGameState((prev) => ({
         ...prev,
         players: data.players,
@@ -59,10 +59,12 @@ export default function useSpeedSocket(playerName) {
       }));
     });
 
-    socket.on("game:finished", ({ winner }) => {
+    socket.on("game:finished", ({ winner, winnerId, opponentCardsLeft }) => {
       setGameState((prev) => ({
         ...prev,
         winner,
+        winnerId,
+        opponentCardsLeft,
         phase: "finished",
       }));
     });
@@ -74,17 +76,21 @@ export default function useSpeedSocket(playerName) {
       }));
     });
 
+    socket.on("lobby:full", ({ message }) => {
+      alert(message);
+    });
+
     return () => socket.disconnect();
   }, []);
 
-  // ✅ 2. Register player name AFTER socket connects
+  // Register player name after socket connects
   useEffect(() => {
     if (connected && playerName) {
       socketRef.current.emit("player:register", { name: playerName });
     }
   }, [connected, playerName]);
 
-  // --- Outgoing actions ---
+  // Outgoing actions
   const sendReady = () => {
     socketRef.current.emit("player:ready");
   };
@@ -101,6 +107,10 @@ export default function useSpeedSocket(playerName) {
     socketRef.current.emit("pile:flipRequest");
   };
 
+  const sendPlayAgain = () => {
+    socketRef.current.emit("game:playAgain");
+  };
+
   return {
     connected,
     lobbyPlayers,
@@ -112,5 +122,6 @@ export default function useSpeedSocket(playerName) {
     drawCard,
     requestFlip,
     socketId,
+    sendPlayAgain,
   };
 }

@@ -24,6 +24,25 @@ function hasPlayableCard(hand, centerPiles) {
   );
 }
 
+function getCardImageUrl(value, suit) {
+  // Map card values to their display names
+  const valueMap = {
+    1: 'A',
+    11: 'J',
+    12: 'Q',
+    13: 'K',
+    10: '0'  // ✅ FIX: Deck of Cards API uses '0' for 10
+  };
+  
+  const displayValue = valueMap[value] || value;
+  
+  // Capitalize first letter of suit
+  const suitCap = suit.charAt(0).toUpperCase() + suit.slice(1);
+  
+  // Using public domain card images from deckofcardsapi.com
+  return `https://deckofcardsapi.com/static/img/${displayValue}${suitCap.charAt(0)}.png`;
+}
+
 function DraggableCard({ cardId, value, suit }) {
   const [{ isDragging }, dragRef] = useDrag(() => ({
     type: "CARD",
@@ -39,12 +58,16 @@ function DraggableCard({ cardId, value, suit }) {
       className="card"
       style={{ opacity: isDragging ? 0.5 : 1 }}
     >
-      {value} {suit}
+      <img 
+        src={getCardImageUrl(value, suit)} 
+        alt={`${value} of ${suit}`}
+        className="card-image"
+      />
     </div>
   );
 }
 
-function DropPile({ pileName, topCard, onDrop }) {
+function DropPile({ pileName, topCard, onDrop, canDrop }) {
   const [{ isOver }, dropRef] = useDrop(() => ({
     accept: "CARD",
     drop: (item) => onDrop(item.cardId, pileName),
@@ -56,14 +79,18 @@ function DropPile({ pileName, topCard, onDrop }) {
   return (
     <div
       ref={dropRef}
-      className="pile"
-      style={{
-        backgroundColor: isOver ? "#d0ffd0" : "transparent",
-      }}
+      className={`pile ${isOver ? 'pile-hover' : ''}`}
     >
-      <h4>{pileName}</h4>
       <div className="card">
-        {topCard ? `${topCard.value} ${topCard.suit}` : "Empty"}
+        {topCard ? (
+          <img 
+            src={getCardImageUrl(topCard.value, topCard.suit)} 
+            alt={`${topCard.value} of ${topCard.suit}`}
+            className="card-image"
+          />
+        ) : (
+          <div className="empty-pile">Empty</div>
+        )}
       </div>
     </div>
   );
@@ -77,12 +104,9 @@ export default function GameBoard({
   playerId,
   gamePlayers,
 }) {
-
-  // ✅ Hooks must always run first
   const gamePlayersRef = React.useRef(gamePlayers);
   gamePlayersRef.current = gamePlayers;
 
-  // ✅ Now safe to early-return
   if (!gameState) return <div>Loading game...</div>;
   if (!playerId || !gamePlayers || !gamePlayers[playerId]) {
     return <div>Loading your cards...</div>;
@@ -92,7 +116,6 @@ export default function GameBoard({
   const leftTop = centerPiles.left?.[centerPiles.left.length - 1] || null;
   const rightTop = centerPiles.right?.[centerPiles.right.length - 1] || null;
 
-
   const me = gamePlayers[playerId];
   const myHand = me.hand;
 
@@ -100,88 +123,118 @@ export default function GameBoard({
   const opponentId = playerIds.find(id => id !== playerId);
   const opponent = gamePlayers[opponentId];
 
-  console.log("Frontend hand IDs:", myHand.map((c) => c.id));
+  const canPlayCard = hasPlayableCard(myHand, centerPiles);
+  const canFlip = !canPlayCard;
 
-  // Use latest gamePlayers when a drop occurs, to avoid stale closures
   const handleDrop = (cardId, pile) => {
     const latestMe = gamePlayersRef.current[playerId];
     const latestHand = latestMe?.hand || [];
 
-    console.log("handleDrop → latestHand IDs:", latestHand.map(c => c.id));
-    console.log("handleDrop → cardId:", cardId);
-
     const card = latestHand.find(c => c.id === cardId);
     if (!card) {
-      console.warn("Card not found in latest hand:", cardId, latestHand);
+      console.warn("Card not found in latest hand:", cardId);
       return;
     }
 
     playCard(card.id, pile);
   };
 
-
   return (
     <div className="game-board">
       {/* Opponent Section */}
       <div className="opponent-section">
-        <h3>{opponent?.name}</h3>
+        <h3 className="player-name">{opponent?.name}'s Hand</h3>
         <div className="opponent-hand">
           {opponent &&
             Array(opponent.hand.length)
               .fill(0)
               .map((_, i) => (
-                <div key={i} className="card back"></div>
+                <div key={i} className="card">
+                  <img 
+                    src="https://deckofcardsapi.com/static/img/back.png" 
+                    alt="Card back"
+                    className="card-image"
+                  />
+                </div>
               ))}
         </div>
-        <h3>
-          {opponent?.name} — Draw: {opponent.drawCount}
-        </h3>
+        <div className="draw-count">
+          <span className="card-icon">🎴</span> Draw Pile: {opponent?.drawCount || 0} cards
+        </div>
       </div>
 
       {/* Center Area */}
       <div className="center-area">
         <div className="side-pile left">
-          <h4>Side Pile L ({sidePiles.left.length})</h4>
+          <div className="pile-label">Side Pile</div>
           <div className="card-stack">
             {sidePiles?.left?.length > 0 ? (
-              <div className="card back"></div>
+              <div className="card">
+                <img 
+                  src="https://deckofcardsapi.com/static/img/back.png" 
+                  alt="Card back"
+                  className="card-image"
+                />
+                <div className="pile-count">{sidePiles.left.length}</div>
+              </div>
             ) : (
-              <div className="empty">Empty</div>
+              <div className="card empty-pile">Empty</div>
             )}
           </div>
         </div>
 
-        <div className="center-piles">
-          <DropPile pileName="left" topCard={leftTop} onDrop={handleDrop} />
-          <DropPile pileName="right" topCard={rightTop} onDrop={handleDrop} />
+        <div className="center-piles-container">
+          <div className="center-piles">
+            <DropPile pileName="left" topCard={leftTop} onDrop={handleDrop} />
+            <DropPile pileName="right" topCard={rightTop} onDrop={handleDrop} />
+          </div>
+          
+          <div className="flip-section">
+            <button
+              onClick={requestFlip}
+              disabled={canPlayCard || gameState.flipVotes?.[playerId]}
+              className={`flip-button ${gameState.flipVotes?.[playerId] ? 'voted' : ''}`}
+            >
+              {gameState.flipVotes?.[playerId] ? '✅ Voted to Flip' : '🔄 Request Flip'}
+            </button>
+            
+            <div className="flip-status">
+              <div className={gameState.flipVotes?.[playerId] ? 'vote-active' : 'vote-inactive'}>
+                You: {gameState.flipVotes?.[playerId] ? '✅' : '⏳'}
+              </div>
+              <div className={gameState.flipVotes?.[opponentId] ? 'vote-active' : 'vote-inactive'}>
+                {opponent?.name}: {gameState.flipVotes?.[opponentId] ? '✅' : '⏳'}
+              </div>
+            </div>
+            
+            {canPlayCard && (
+              <div className="hint">You have a playable card!</div>
+            )}
+          </div>
         </div>
 
         <div className="side-pile right">
-          <h4>Side Pile R ({sidePiles.right.length})</h4>
+          <div className="pile-label">Side Pile</div>
           <div className="card-stack">
             {sidePiles?.right?.length > 0 ? (
-              <div className="card back"></div>
+              <div className="card">
+                <img 
+                  src="https://deckofcardsapi.com/static/img/back.png" 
+                  alt="Card back"
+                  className="card-image"
+                />
+                <div className="pile-count">{sidePiles.right.length}</div>
+              </div>
             ) : (
-              <div className="empty">Empty</div>
+              <div className="card empty-pile">Empty</div>
             )}
-          </div>
-        </div>
-
-        <div className="flip-status">
-          <h4>Flip Votes</h4>
-          <div>
-            You: {gameState.flipVotes?.[playerId] ? "✅ Voted" : "⏳ Not yet"}
-          </div>
-          <div>
-            {opponent?.name}:{" "}
-            {gameState.flipVotes?.[opponentId] ? "✅ Voted" : "⏳ Not yet"}
           </div>
         </div>
       </div>
 
       {/* Player Section */}
       <div className="player-section">
-        <h3>{me?.name}</h3>
+        <h3 className="player-name">Your Hand</h3>
 
         <div className="player-hand">
           {myHand.map((card) => (
@@ -194,21 +247,19 @@ export default function GameBoard({
           ))}
         </div>
 
-        <h3>
-          {me?.name} — Draw: {me.drawCount}
-        </h3>
-
-        <div className="actions">
+        <div className="player-controls">
+          <div className="draw-count">
+            <span className="card-icon">🎴</span> Draw Pile: {me?.drawCount || 0} cards
+          </div>
+          
           <button
-            onClick={() => {
-              if (hasPlayableCard(myHand, centerPiles)) {
-                alert("You have a playable card!");
-                return;
-              }
-              requestFlip();
-            }}
+            onClick={drawCard}
+            disabled={me.drawCount === 0 || myHand.length >= 5}
+            className="draw-button"
           >
-            Flip
+            {me.drawCount === 0 ? 'No Cards to Draw' : 
+             myHand.length >= 5 ? 'Hand Full' : 
+             '📥 Draw Card'}
           </button>
         </div>
       </div>

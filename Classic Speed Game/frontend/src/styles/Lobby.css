@@ -1,0 +1,237 @@
+.lobby-container {
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  padding: 20px;
+}
+
+/* Name Entry Screen */
+.name-entry {
+  background: white;
+  padding: 50px;
+  border-radius: 20px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  text-align: center;
+  max-width: 500px;
+  width: 100%;
+  animation: fadeIn 0.5s ease-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.game-title {
+  margin: 0 0 10px 0;
+  font-size: 2.5rem;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.subtitle {
+  margin: 0 0 30px 0;
+  color: #6b7280;
+  font-size: 1.1rem;
+}
+
+.name-form {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.name-form input {
+  padding: 15px;
+  font-size: 1.1rem;
+  border: 2px solid #e5e7eb;
+  border-radius: 10px;
+  transition: all 0.3s ease;
+}
+
+.name-form input:focus {
+  outline: none;
+  border-color: #667eea;
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+.name-form button {
+  padding: 15px;
+  font-size: 1.1rem;
+  font-weight: bold;
+  border: none;
+  border-radius: 10px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+}
+
+.name-form button:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+}
+
+.name-form button:disabled {
+  background: #94a3b8;
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+/* Countdown Screen */
+.countdown-screen {
+  text-align: center;
+  color: white;
+  animation: fadeIn 0.3s ease-out;
+}
+
+.countdown-number {
+  font-size: 10rem;
+  font-weight: bold;
+  margin: 0;
+  text-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+  animation: countdownPulse 1s ease-in-out;
+}
+
+@keyframes countdownPulse {
+  0% {
+    transform: scale(0.8);
+    opacity: 0;
+  }
+  50% {
+    transform: scale(1.2);
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.countdown-screen p {
+  font-size: 2rem;
+  margin-top: 20px;
+}
+
+/* Waiting Room */
+.waiting-room {
+  background: white;
+  padding: 40px;
+  border-radius: 20px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  text-align: center;
+  min-width: 400px;
+  animation: fadeIn 0.5s ease-out;
+}
+
+.waiting-room h2 {
+  margin: 0 0 30px 0;
+  font-size: 2rem;
+  color: #333;
+}
+
+.players-list {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  margin-bottom: 30px;
+}
+
+.player-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px;
+  border-radius: 12px;
+  background: #f9fafb;
+  border: 2px solid #e5e7eb;
+  transition: all 0.3s ease;
+}
+
+.player-item.ready {
+  background: #ecfdf5;
+  border-color: #10b981;
+  animation: slideIn 0.3s ease-out;
+}
+
+.player-item.waiting {
+  animation: pulse 2s infinite;
+}
+
+.player-item.empty {
+  border-style: dashed;
+  opacity: 0.6;
+}
+
+.player-name {
+  font-size: 1.2rem;
+  font-weight: bold;
+  color: #333;
+}
+
+.player-status {
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.ready-button {
+  padding: 15px 40px;
+  font-size: 1.2rem;
+  font-weight: bold;
+  border: none;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+}
+
+.ready-button:hover:not(:disabled) {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+}
+
+.ready-button:disabled {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  cursor: not-allowed;
+}
+
+.starting-message {
+  margin-top: 20px;
+  font-size: 1.1rem;
+  color: #10b981;
+  font-weight: bold;
+  animation: pulse 1.5s infinite;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .name-entry {
+    padding: 30px;
+  }
+  
+  .game-title {
+    font-size: 2rem;
+  }
+  
+  .countdown-number {
+    font-size: 6rem;
+  }
+  
+  .waiting-room {
+    min-width: auto;
+    width: 100%;
+    padding: 30px 20px;
+  }
+}
