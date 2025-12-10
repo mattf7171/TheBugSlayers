@@ -1,0 +1,178 @@
+:root {
+  --green-dark: #2d5a2d;
+  --green-main: #4caf50;
+  --green-accent: #45a049;
+  --bg-soft: #f7f9f7;
+  --card-bg: #ffffff;
+  --text-main: #1f2933;
+  --text-muted: #6b7280;
+  --border-subtle: #e5e7eb;
+  --shadow-soft: 0 14px 28px rgba(0, 0, 0, 0.08);
+}
+
+/* Overall game board layout */
+.game-board {
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  gap: 2rem;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 1.5rem;
+  background: var(--bg-soft);
+  border-radius: 1rem;
+}
+
+/* Opponent section */
+.opponent-section {
+  text-align: center;
+}
+
+.opponent-hand {
+  display: flex;
+  justify-content: center;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
+
+.opponent-section h3 {
+  color: var(--green-dark);
+}
+
+/* Player section */
+.player-section {
+  text-align: center;
+}
+
+.player-hand {
+  display: flex;
+  justify-content: center;
+  gap: 0.5rem;
+  margin: 1rem 0;
+}
+
+.player-section h3 {
+  color: var(--green-dark);
+}
+
+/* Center area */
+.center-area {
+  display: flex;
+  justify-content: space-around;
+  align-items: flex-start;
+  gap: 1.5rem;
+}
+
+.center-piles {
+  display: flex;
+  gap: 2rem;
+  justify-content: center;
+  align-items: center;
+}
+
+/* Card styles */
+.card {
+  width: 80px;
+  height: 120px;
+  background: var(--card-bg);
+  border-radius: 12px;
+  box-shadow: var(--shadow-soft);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  color: var(--text-main);
+  cursor: grab;
+  transition: transform 0.15s ease;
+}
+
+.card:active {
+  cursor: grabbing;
+  transform: scale(1.05);
+}
+
+.card.back {
+  background: linear-gradient(135deg, var(--green-main), var(--green-accent));
+  color: transparent;
+}
+
+/* Piles */
+.pile {
+  border: 2px dashed var(--green-main);
+  border-radius: 12px;
+  padding: 0.75rem;
+  min-width: 100px;
+  min-height: 140px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.pile h4 {
+  margin-bottom: 0.5rem;
+  font-size: 0.9rem;
+  color: var(--text-muted);
+}
+
+.card-stack {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.empty {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+
+/* Flip status */
+.flip-status {
+  text-align: center;
+  margin-top: 1rem;
+  font-size: 0.9rem;
+  color: var(--text-main);
+}
+
+.flip-status h4 {
+  margin-bottom: 0.5rem;
+  color: var(--green-dark);
+}
+
+/* Actions */
+.actions button {
+  border: none;
+  border-radius: 999px;
+  padding: 0.55rem 1.4rem;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  background: linear-gradient(135deg, var(--green-main), var(--green-accent));
+  color: #ffffff;
+  transition: background 0.15s ease, transform 0.05s ease;
+}
+
+.actions button:hover:not(:disabled) {
+  background: linear-gradient(135deg, var(--green-accent), var(--green-main));
+  transform: translateY(-1px);
+}
+
+.actions button:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+/* Results screen */
+.results-screen {
+  text-align: center;
+  padding: 2rem;
+}
+
+.results-screen h1 {
+  color: var(--green-dark);
+  margin-bottom: 1rem;
+}
+
+.results-screen h2 {
+  color: var(--text-main);
+  margin-bottom: 1.5rem;
+}
