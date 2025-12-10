@@ -278,20 +278,25 @@ function handleCardPlay(socket, playerId, cardId, pile) {
   }
 
   if (player.hand.length === 0 && player.drawPile.length === 0) {
-    game.phase = 'finished';
-    game.winner = playerId;
-    
-    const playerIds = Object.keys(game.players);
-    const opponentId = playerIds.find(id => id !== playerId);
-    const opponentCardsLeft = game.players[opponentId].hand.length + game.players[opponentId].drawPile.length;
+  game.phase = 'finished';
+  game.winner = playerId;
+  
+  const playerIds = Object.keys(game.players);
+  const opponentId = playerIds.find(id => id !== playerId);
+  const opponent = game.players[opponentId];
+  const opponentCardsLeft = opponent.hand.length + opponent.drawPile.length;
 
-    io.emit('game:finished', { 
-      winner: player.name,
-      winnerId: playerId,
-      opponentCardsLeft
-    });
-    return;
-  }
+  // ✅ FIX: Save game results to database HERE (backend side, once per game)
+  saveGameResults(player.name, opponent.name, opponentCardsLeft);
+
+  io.emit('game:finished', { 
+    winner: player.name,
+    winnerId: playerId,
+    loserId: opponentId,
+    opponentCardsLeft
+  });
+  return;
+}
 
   for (const id in game.flipVotes) {
     game.flipVotes[id] = false;
@@ -445,6 +450,34 @@ function resetGameState() {
   game.gameStartTime = null;
 
   players.forEach((p) => (p.ready = false));
+}
+
+// Helper function to save game results
+async function saveGameResults(winnerName, loserName, loserCardsLeft) {
+  try {
+    const db = await connectDB();
+    const results = db.collection('gameResults');
+
+    // Save winner's result
+    await results.insertOne({
+      playerName: winnerName,
+      result: 'win',
+      opponentCardsLeft: loserCardsLeft,
+      timestamp: new Date(),
+    });
+
+    // Save loser's result
+    await results.insertOne({
+      playerName: loserName,
+      result: 'loss',
+      opponentCardsLeft: null,
+      timestamp: new Date(),
+    });
+
+    console.log('Game results saved for:', winnerName, 'and', loserName);
+  } catch (err) {
+    console.error('Error saving game results:', err);
+  }
 }
 
 // --- start server ---

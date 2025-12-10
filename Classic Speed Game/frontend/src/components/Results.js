@@ -1,47 +1,29 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import '../styles/Results.css';
 
 export default function Results({ winner, winnerId, opponentCardsLeft, playerId, playerName, onPlayAgain }) {
   const [gameHistory, setGameHistory] = useState([]);
   const [loading, setLoading] = useState(true);
   const [readyForRematch, setReadyForRematch] = useState(false);
-  const hasSaved = useRef(false);  // ✅ FIX: Prevent duplicate saves
 
   const didIWin = winnerId === playerId;
 
   useEffect(() => {
-    // ✅ FIX: Only save once per game result
-    if (hasSaved.current) return;
-    
-    // Save game result to database
-    const saveResult = async () => {
+    // ✅ FIX: Only FETCH history, don't save (backend already saved it)
+    const fetchHistory = async () => {
       try {
-        hasSaved.current = true;  // Mark as saved immediately
-        
-        await fetch('http://localhost:4000/api/game-result', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            playerName,
-            won: didIWin,
-            opponentCardsLeft: didIWin ? opponentCardsLeft : null,
-          }),
-        });
-
-        // Fetch game history
         const response = await fetch(`http://localhost:4000/api/game-history/${playerName}`);
         const data = await response.json();
         setGameHistory(data.history || []);
       } catch (err) {
-        console.error('Error with game results:', err);
-        hasSaved.current = false;  // Allow retry on error
+        console.error('Error fetching game history:', err);
       } finally {
         setLoading(false);
       }
     };
 
-    saveResult();
-  }, []); // ✅ FIX: Empty dependency array - only run once
+    fetchHistory();
+  }, [playerName]);
 
   const handlePlayAgain = () => {
     setReadyForRematch(true);
