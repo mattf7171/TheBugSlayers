@@ -4,10 +4,13 @@ import Results from "./Results";
 import useSpeedSocket from "../hooks/useSpeedSocket";
 import "../styles/Lobby.css";
 
+// Lobby component 
 export default function Lobby() {
+  // local UI state for name entry
   const [name, setName] = useState("");
   const [submitted, setSubmitted] = useState(false);
 
+  // useSpeedSocket hook handles
   const {
     lobbyPlayers,
     gameState,
@@ -64,7 +67,7 @@ export default function Lobby() {
     );
   }
 
-  // Game board
+  // Game board -- active game UI
   if (gameState?.phase === "playing") {
     return (
       <GameBoard
@@ -92,7 +95,7 @@ export default function Lobby() {
     );
   }
 
-  // Waiting room
+  // Waiting room -- default
   return (
     <div className="lobby-container">
       <div className="waiting-room">

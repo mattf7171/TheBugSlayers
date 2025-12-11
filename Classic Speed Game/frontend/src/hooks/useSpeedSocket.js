@@ -2,14 +2,14 @@ import { useEffect, useRef, useState } from "react";
 import { io } from "socket.io-client";
 
 export default function useSpeedSocket(playerName) {
-  const socketRef = useRef(null);
+  const socketRef = useRef(null); // holds socket instance across renders
 
-  const [lobbyPlayers, setLobbyPlayers] = useState([]);
-  const [gamePlayers, setGamePlayers] = useState({});
-  const [gameState, setGameState] = useState(null);
-  const [countdown, setCountdown] = useState(null);
-  const [connected, setConnected] = useState(false);
-  const [socketId, setSocketId] = useState(null);
+  const [lobbyPlayers, setLobbyPlayers] = useState([]); // lobby state
+  const [gamePlayers, setGamePlayers] = useState({}); // game players object keyed by socketId
+  const [gameState, setGameState] = useState(null); // full game state
+  const [countdown, setCountdown] = useState(null); // countdown
+  const [connected, setConnected] = useState(false);  // connection
+  const [socketId, setSocketId] = useState(null); // connection identity
 
   // Create socket connection once
   useEffect(() => {
@@ -19,23 +19,28 @@ export default function useSpeedSocket(playerName) {
 
     socketRef.current = socket;
 
+    // fired when socket.io successfully connects
     socket.on("connect", () => {
       setConnected(true);
       setSocketId(socket.id);
     });
 
+    // backend confirms playerId after registration
     socket.on("player:registered", ({ name, playerId }) => {
       setSocketId(playerId);
     });
 
+    // lobby updates
     socket.on("players:update", (players) => {
       setLobbyPlayers(players);
     });
 
+    // countdown
     socket.on("game:countdown", ({ seconds }) => {
       setCountdown(seconds);
     });
 
+    // initial game state when match begins
     socket.on("game:start", (data) => {
       setGamePlayers(data.players);
       setGameState({
@@ -48,6 +53,7 @@ export default function useSpeedSocket(playerName) {
       setCountdown(null);
     });
 
+    // ongoing game updates
     socket.on("game:update", (data) => {
       setGamePlayers(data.players);
       setGameState((prev) => ({
@@ -59,6 +65,7 @@ export default function useSpeedSocket(playerName) {
       }));
     });
 
+    // game finished event
     socket.on("game:finished", ({ winner, winnerId, opponentCardsLeft }) => {
       setGameState((prev) => ({
         ...prev,
@@ -69,6 +76,7 @@ export default function useSpeedSocket(playerName) {
       }));
     });
 
+    // Flip votes updates
     socket.on("pile:flipStatus", (votes) => {
       setGameState((prev) => ({
         ...prev,
@@ -76,10 +84,12 @@ export default function useSpeedSocket(playerName) {
       }));
     });
 
+    // lobby full
     socket.on("lobby:full", ({ message }) => {
       alert(message);
     });
 
+    // cleanup
     return () => socket.disconnect();
   }, []);
 
@@ -90,27 +100,33 @@ export default function useSpeedSocket(playerName) {
     }
   }, [connected, playerName]);
 
-  // Outgoing actions
+  // Outgoing actions //
+  // mark player as ready
   const sendReady = () => {
     socketRef.current.emit("player:ready");
   };
 
+  // attempt to play a card
   const playCard = (cardId, pile) => {
     socketRef.current.emit("card:play", { cardId, pile });
   };
 
+  // draw a card
   const drawCard = () => {
     socketRef.current.emit("card:draw");
   };
 
+  // request to flip side piles
   const requestFlip = () => {
     socketRef.current.emit("pile:flipRequest");
   };
 
+  // request to play again
   const sendPlayAgain = () => {
     socketRef.current.emit("game:playAgain");
   };
 
+  // expose all state + actions to the component 
   return {
     connected,
     lobbyPlayers,

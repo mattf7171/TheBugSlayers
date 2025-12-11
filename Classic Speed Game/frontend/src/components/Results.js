@@ -1,15 +1,17 @@
 import React, { useState, useEffect } from 'react';
 import '../styles/Results.css';
 
+// Results component
 export default function Results({ winner, winnerId, opponentCardsLeft, playerId, playerName, onPlayAgain }) {
-  const [gameHistory, setGameHistory] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [readyForRematch, setReadyForRematch] = useState(false);
+  const [gameHistory, setGameHistory] = useState([]); // player's historical match data
+  const [loading, setLoading] = useState(true); // loading state for history fetch
+  const [readyForRematch, setReadyForRematch] = useState(false);  // play again
 
+  // determine if player won
   const didIWin = winnerId === playerId;
 
   useEffect(() => {
-    // ✅ FIX: Only FETCH history, don't save (backend already saved it)
+    // Only FETCH history, don't save (backend already saved it)
     const fetchHistory = async () => {
       try {
         const response = await fetch(`http://localhost:4000/api/game-history/${playerName}`);
@@ -25,6 +27,7 @@ export default function Results({ winner, winnerId, opponentCardsLeft, playerId,
     fetchHistory();
   }, [playerName]);
 
+  // Play again?
   const handlePlayAgain = () => {
     setReadyForRematch(true);
     onPlayAgain();

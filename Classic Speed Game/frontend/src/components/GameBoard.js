@@ -3,12 +3,14 @@ import "../styles/GameBoard.css";
 import { useDrag } from "react-dnd";
 import { useDrop } from "react-dnd";
 
+// Determine if card is playable
 function isPlayable(card, pileCard) {
   if (!pileCard) return false;
 
   const cardValue = card.value;
   const pileValue = pileCard.value;
 
+  // speed rules
   return (
     Math.abs(cardValue - pileValue) === 1 ||
     (cardValue === 1 && pileValue === 13) ||
@@ -16,6 +18,7 @@ function isPlayable(card, pileCard) {
   );
 }
 
+// check for any playable card
 function hasPlayableCard(hand, centerPiles) {
   const leftTop = centerPiles.left?.[centerPiles.left.length - 1] || null;
   const rightTop = centerPiles.right?.[centerPiles.right.length - 1] || null;
@@ -24,6 +27,7 @@ function hasPlayableCard(hand, centerPiles) {
   );
 }
 
+// Get card image
 function getCardImageUrl(value, suit) {
   // Map card values to their display names
   const valueMap = {
@@ -31,7 +35,7 @@ function getCardImageUrl(value, suit) {
     11: 'J',
     12: 'Q',
     13: 'K',
-    10: '0'  // ✅ FIX: Deck of Cards API uses '0' for 10
+    10: '0'  // Deck of Cards API uses '0' for 10
   };
   
   const displayValue = valueMap[value] || value;
@@ -43,6 +47,7 @@ function getCardImageUrl(value, suit) {
   return `https://deckofcardsapi.com/static/img/${displayValue}${suitCap.charAt(0)}.png`;
 }
 
+// Draggable Card - make cards draggable
 function DraggableCard({ cardId, value, suit }) {
   const [{ isDragging }, dragRef] = useDrag(() => ({
     type: "CARD",
@@ -67,6 +72,7 @@ function DraggableCard({ cardId, value, suit }) {
   );
 }
 
+// Drop pile - center piles
 function DropPile({ pileName, topCard, onDrop, canDrop }) {
   const [{ isOver }, dropRef] = useDrop(() => ({
     accept: "CARD",
@@ -96,6 +102,7 @@ function DropPile({ pileName, topCard, onDrop, canDrop }) {
   );
 }
 
+// Gameboard component
 export default function GameBoard({
   gameState,
   playCard,
@@ -104,18 +111,22 @@ export default function GameBoard({
   playerId,
   gamePlayers,
 }) {
+  // Keep the latest gamePlaers in a ref
   const gamePlayersRef = React.useRef(gamePlayers);
   gamePlayersRef.current = gamePlayers;
 
+  // early loading states
   if (!gameState) return <div>Loading game...</div>;
   if (!playerId || !gamePlayers || !gamePlayers[playerId]) {
     return <div>Loading your cards...</div>;
   }
 
+  // extract game state
   const { centerPiles, sidePiles } = gameState;
   const leftTop = centerPiles.left?.[centerPiles.left.length - 1] || null;
   const rightTop = centerPiles.right?.[centerPiles.right.length - 1] || null;
 
+  // identify self and opponent
   const me = gamePlayers[playerId];
   const myHand = me.hand;
 
@@ -123,9 +134,11 @@ export default function GameBoard({
   const opponentId = playerIds.find(id => id !== playerId);
   const opponent = gamePlayers[opponentId];
 
+  // gameplay helpers
   const canPlayCard = hasPlayableCard(myHand, centerPiles);
   const canFlip = !canPlayCard;
 
+  // handle drop called when a card is dropped into center piles
   const handleDrop = (cardId, pile) => {
     const latestMe = gamePlayersRef.current[playerId];
     const latestHand = latestMe?.hand || [];
